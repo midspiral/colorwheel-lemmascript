@@ -273,10 +273,16 @@ private lemma colorSatisfiesMood_of_generated_core (mood : Mood) (h i seedS seed
 
 -- ═══ Reachability ═══
 
-theorem canReachAnyColor (m : Model) (idx : Int) (target : Color) (_h : ModelInv m)
-    (_hidx : 0 ≤ idx ∧ idx < 5) (_hv : ValidColor target) :
+set_option maxHeartbeats 1600000 in
+theorem canReachAnyColor (m : Model) (idx : Int) (target : Color) (h : ModelInv m)
+    (hidx : 0 ≤ idx ∧ idx < 5) (hv : ValidColor target) :
     (Pure.step m (.SetColorDirect idx target)).colors[idx.toNat]! = target := by
-  sorry
+  unfold ModelInv at h; obtain ⟨_, _, hcs, _, _, _, _, _, _, _⟩ := h
+  simp only [Pure.step, Pure.apply, Pure.applySetColorDirect, Pure.normalizeModel, hcs, ↓reduceIte]
+  set n := idx.toNat with hn
+  have hn5 : n < 5 := by omega
+  -- Each index: rewrite idx.toNat to concrete value, then array access computes
+  interval_cases n <;> simp_all [← hn, clampColor_idempotent _ hv, clampColor_idem]
 
 set_option maxHeartbeats 1600000 in
 set_option auto.smt.timeout 30 in
