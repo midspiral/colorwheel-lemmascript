@@ -307,10 +307,19 @@ theorem canRecoverMood (m : Model) (targetMood : Mood) (seeds : Array Int) (h : 
                eq_iff_iff, iff_true]
     split_ifs <;> simp_all
 
-theorem canRecoverHarmony (m : Model) (targetHarmony : Harmony) (seeds : Array Int) (_h : ModelInv m)
-    (_hvs : seeds.size = 10) (_hvr : Pure.validRandomSeeds seeds = true) :
+set_option maxHeartbeats 1600000 in
+theorem canRecoverHarmony (m : Model) (targetHarmony : Harmony) (seeds : Array Int) (h : ModelInv m)
+    (hvs : seeds.size = 10) (hvr : Pure.validRandomSeeds seeds = true) :
     (Pure.step m (.RegenerateHarmony targetHarmony seeds)).harmony = targetHarmony := by
-  sorry
+  unfold ModelInv at h; obtain ⟨hbh0, hbh1, hcs, _, _, _, _, _, _, _⟩ := h
+  simp only [Pure.step, Pure.apply, Pure.applyRegenerateHarmony, Pure.validRandomSeeds] at *
+  split_ifs with hv
+  · exfalso; simp_all
+  · -- Key: normalizeHue_idempotent aligns baseHues, normalizeHue_idem handles double-normalize
+    simp only [Pure.normalizeModel, normalizeHue_idempotent _ hbh0 hbh1, normalizeHue_idem,
+               Pure.huesMatchHarmony, Pure.generatePaletteColors, Pure.allHarmonyHues,
+               Pure.generateColorGolden, Pure.clampColor, Pure.allColorsSatisfyMood]
+    cases targetHarmony <;> simp_all [normalizeHue_idempotent _ hbh0 hbh1]
 
 -- ═══ Idempotence ═══
 
