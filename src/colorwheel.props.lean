@@ -217,6 +217,31 @@ theorem harmonyOnlyDegradesToCustom (m : Model) (idx dH dS dL : Int) (h : ModelI
   exfalso; obtain ⟨_, hsz, habs⟩ := ‹_ ∧ _ ∧ ¬_›
   rw [getElem!_of_lt _ _ (hsz ▸ by omega)] at habs; exact habs rfl
 
+-- ═══ Core arithmetic: generated colors satisfy their mood ═══
+
+-- clampColor preserves s/l when already in [0, 100]
+private lemma clampColor_preserves_sl (c : Color) :
+    (Pure.clampColor c).s = Pure.clamp c.s 0 100 ∧ (Pure.clampColor c).l = Pure.clamp c.l 0 100 := by
+  simp [Pure.clampColor]
+
+-- A single generated color satisfies its mood (the key arithmetic lemma).
+-- Individual bound args for simp-friendly side condition discharge.
+set_option maxHeartbeats 800000 in
+private lemma colorSatisfiesMood_of_generated_core (mood : Mood) (h i seedS seedL : Int)
+    (hi : 0 ≤ i ∧ i < 5) (hs : 0 ≤ seedS ∧ seedS ≤ 100) (hl : 0 ≤ seedL ∧ seedL ≤ 100) :
+    Pure.colorSatisfiesMood (Pure.clampColor (Pure.generateColorGolden h mood i seedS seedL)) mood = true := by
+  -- Needs: randomInRange bounds → clamp bounds → mood satisfaction
+  -- Each mood has concrete S/L bounds; randomInRange stays within them.
+  -- The proof chains randomInRange_ge/le with clamp properties per mood variant.
+  sorry
+
+-- Simp-friendly wrapper with individual bound args for automatic side condition discharge
+@[simp] private lemma colorSatisfiesMood_of_generated (mood : Mood) (h i seedS seedL : Int)
+    (hs0 : 0 ≤ seedS) (hs1 : seedS ≤ 100) (hl0 : 0 ≤ seedL) (hl1 : seedL ≤ 100)
+    (hi0 : 0 ≤ i) (hi1 : i < 5) :
+    Pure.colorSatisfiesMood (Pure.clampColor (Pure.generateColorGolden h mood i seedS seedL)) mood = true :=
+  colorSatisfiesMood_of_generated_core mood h i seedS seedL ⟨hi0, hi1⟩ ⟨hs0, hs1⟩ ⟨hl0, hl1⟩
+
 -- ═══ Reachability ═══
 
 theorem canReachAnyColor (m : Model) (idx : Int) (target : Color) (_h : ModelInv m)
@@ -224,10 +249,18 @@ theorem canReachAnyColor (m : Model) (idx : Int) (target : Color) (_h : ModelInv
     (Pure.step m (.SetColorDirect idx target)).colors[idx.toNat]! = target := by
   sorry
 
-theorem canRecoverMood (m : Model) (targetMood : Mood) (seeds : Array Int) (_h : ModelInv m)
-    (_hvs : seeds.size = 10) (_hvr : Pure.validRandomSeeds seeds = true) :
+set_option maxHeartbeats 1600000 in
+set_option auto.smt.timeout 30 in
+theorem canRecoverMood (m : Model) (targetMood : Mood) (seeds : Array Int) (h : ModelInv m)
+    (hvs : seeds.size = 10) (hvr : Pure.validRandomSeeds seeds = true) :
     (Pure.step m (.RegenerateMood targetMood seeds)).mood = targetMood := by
-  sorry
+  unfold ModelInv at h; obtain ⟨hbh0, hbh1, hcs, _, _, _, _, _, _, _⟩ := h
+  simp only [Pure.step, Pure.apply, Pure.applyRegenerateMood, Pure.validRandomSeeds] at *
+  split_ifs with hv
+  · -- invalid seeds: model unchanged, need m.mood = targetMood... contradiction
+    exfalso; simp_all
+  · -- valid seeds: needs colorSatisfiesMood_of_generated (requires randomInRange arithmetic)
+    sorry
 
 theorem canRecoverHarmony (m : Model) (targetHarmony : Harmony) (seeds : Array Int) (_h : ModelInv m)
     (_hvs : seeds.size = 10) (_hvr : Pure.validRandomSeeds seeds = true) :
