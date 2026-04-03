@@ -230,10 +230,39 @@ set_option maxHeartbeats 800000 in
 private lemma colorSatisfiesMood_of_generated_core (mood : Mood) (h i seedS seedL : Int)
     (hi : 0 ≤ i ∧ i < 5) (hs : 0 ≤ seedS ∧ seedS ≤ 100) (hl : 0 ≤ seedL ∧ seedL ≤ 100) :
     Pure.colorSatisfiesMood (Pure.clampColor (Pure.generateColorGolden h mood i seedS seedL)) mood = true := by
-  -- Needs: randomInRange bounds → clamp bounds → mood satisfaction
-  -- Each mood has concrete S/L bounds; randomInRange stays within them.
-  -- The proof chains randomInRange_ge/le with clamp properties per mood variant.
-  sorry
+  -- Don't unfold randomInRange - use its spec lemmas for bounds
+  simp only [Pure.generateColorGolden, Pure.goldenSLForMood, Pure.moodBoundsOf,
+             Pure.colorSatisfiesMood, Pure.clampColor, Pure.clamp, Pure.normalizeHue,
+             decide_eq_true_eq]
+  -- spreadS/spreadL are in [0, 100] from % 101
+  set sS := (seedS + i * 62) % 101
+  set sL := (seedL + i * 38) % 101
+  have hsS0 : 0 ≤ sS := Int.emod_nonneg _ (by omega)
+  have hsS1 : sS ≤ 100 := by have := Int.emod_lt_of_pos (seedS + i * 62) (by omega : (101 : Int) > 0); omega
+  have hsL0 : 0 ≤ sL := Int.emod_nonneg _ (by omega)
+  have hsL1 : sL ≤ 100 := by have := Int.emod_lt_of_pos (seedL + i * 38) (by omega : (101 : Int) > 0); omega
+  -- Per mood: each first branch provides bounds + closes with omega
+  have rge := @Pure.randomInRange_ge; have rle := @Pure.randomInRange_le
+  cases mood <;> simp only [decide_eq_true_eq] <;> first
+    | trivial
+    | (have := rge sS 70 100 hsS0 hsS1 (by omega); have := rle sS 70 100 hsS0 hsS1 (by omega)
+       have := rge sL 40 60 hsL0 hsL1 (by omega); have := rle sL 40 60 hsL0 hsL1 (by omega)
+       split_ifs <;> omega)
+    | (have := rge sS 20 45 hsS0 hsS1 (by omega); have := rle sS 20 45 hsS0 hsS1 (by omega)
+       have := rge sL 55 75 hsL0 hsL1 (by omega); have := rle sL 55 75 hsL0 hsL1 (by omega)
+       split_ifs <;> omega)
+    | (have := rge sS 0 35 hsS0 hsS1 (by omega); have := rle sS 0 35 hsS0 hsS1 (by omega)
+       have := rge sL 75 100 hsL0 hsL1 (by omega); have := rle sL 75 100 hsL0 hsL1 (by omega)
+       split_ifs <;> omega)
+    | (have := rge sS 60 100 hsS0 hsS1 (by omega); have := rle sS 60 100 hsS0 hsS1 (by omega)
+       have := rge sL 25 45 hsL0 hsL1 (by omega); have := rle sL 25 45 hsL0 hsL1 (by omega)
+       split_ifs <;> omega)
+    | (have := rge sS 15 40 hsS0 hsS1 (by omega); have := rle sS 15 40 hsS0 hsS1 (by omega)
+       have := rge sL 30 60 hsL0 hsL1 (by omega); have := rle sL 30 60 hsL0 hsL1 (by omega)
+       split_ifs <;> omega)
+    | (have := rge sS 90 100 hsS0 hsS1 (by omega); have := rle sS 90 100 hsS0 hsS1 (by omega)
+       have := rge sL 50 65 hsL0 hsL1 (by omega); have := rle sL 50 65 hsL0 hsL1 (by omega)
+       split_ifs <;> omega)
 
 -- Simp-friendly wrapper with individual bound args for automatic side condition discharge
 @[simp] private lemma colorSatisfiesMood_of_generated (mood : Mood) (h i seedS seedL : Int)
@@ -259,8 +288,24 @@ theorem canRecoverMood (m : Model) (targetMood : Mood) (seeds : Array Int) (h : 
   split_ifs with hv
   · -- invalid seeds: model unchanged, need m.mood = targetMood... contradiction
     exfalso; simp_all
-  · -- valid seeds: needs colorSatisfiesMood_of_generated (requires randomInRange arithmetic)
-    sorry
+  · -- valid seeds: generated colors satisfy mood → normalizeModel preserves mood
+    simp only [Pure.validRandomSeeds, Bool.and_eq_true, decide_eq_true_eq,
+               getElem!_of_lt seeds 0 (by omega), getElem!_of_lt seeds 1 (by omega),
+               getElem!_of_lt seeds 2 (by omega), getElem!_of_lt seeds 3 (by omega),
+               getElem!_of_lt seeds 4 (by omega), getElem!_of_lt seeds 5 (by omega),
+               getElem!_of_lt seeds 6 (by omega), getElem!_of_lt seeds 7 (by omega),
+               getElem!_of_lt seeds 8 (by omega), getElem!_of_lt seeds 9 (by omega)] at hvr
+    obtain ⟨_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _⟩ := hvr
+    simp only [Pure.normalizeModel, Pure.allColorsSatisfyMood,
+               Pure.generatePaletteColors,
+               getElem!_of_lt seeds 0 (by omega), getElem!_of_lt seeds 1 (by omega),
+               getElem!_of_lt seeds 2 (by omega), getElem!_of_lt seeds 3 (by omega),
+               getElem!_of_lt seeds 4 (by omega), getElem!_of_lt seeds 5 (by omega),
+               getElem!_of_lt seeds 6 (by omega), getElem!_of_lt seeds 7 (by omega),
+               getElem!_of_lt seeds 8 (by omega), getElem!_of_lt seeds 9 (by omega),
+               colorSatisfiesMood_of_generated, Bool.and_eq_true, decide_eq_true_eq,
+               eq_iff_iff, iff_true]
+    split_ifs <;> simp_all
 
 theorem canRecoverHarmony (m : Model) (targetHarmony : Harmony) (seeds : Array Int) (_h : ModelInv m)
     (_hvs : seeds.size = 10) (_hvr : Pure.validRandomSeeds seeds = true) :
