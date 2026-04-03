@@ -67,5 +67,5 @@ target downloadDependencies pkg : Array FilePath := do
 @[default_target]
 lean_lib ColorWheel where
   srcDir := "src"
-  roots := #[`«colorwheel.types», `«colorwheel.def», `«colorwheel.proof»]
+  roots := #[`«colorwheel.types», `«colorwheel.spec», `«colorwheel.def», `«colorwheel.proof»]
   extraDepTargets := #[``downloadDependencies]

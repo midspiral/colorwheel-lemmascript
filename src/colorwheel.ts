@@ -71,6 +71,9 @@ function normalizeHue(h: number): number {
 }
 
 function clampColor(c: Color): Color {
+  //@ ensures \result.h >= 0 && \result.h < 360
+  //@ ensures \result.s >= 0 && \result.s <= 100
+  //@ ensures \result.l >= 0 && \result.l <= 100
   return {
     h: normalizeHue(c.h),
     s: clamp(c.s, 0, 100),
@@ -301,7 +304,7 @@ function applySetColorDirect(m: Model, index: number, color: Color): Model {
 
 // ═══ Normalize ═══
 
-export function normalize(m: Model): Model {
+export function normalizeModel(m: Model): Model {
   const normalizedBaseHue = normalizeHue(m.baseHue);
   let normalizedColors: Color[];
   if (m.colors.length === 5) {

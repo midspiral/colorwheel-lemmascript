@@ -4,7 +4,7 @@
  */
 
 import {
-  init, apply, normalize,
+  init, apply, normalizeModel,
   type Color, type Model, type Mood, type Harmony, type Action, type ContrastPair,
 } from './colorwheel.ts';
 
@@ -56,7 +56,7 @@ export const actions = {
 
 // ── Core ──
 
-const step = (model: Model, action: Action): Model => normalize(apply(model, action));
+const step = (model: Model, action: Action): Model => normalizeModel(apply(model, action));
 
 export const app = {
   Init: (): History => ({ past: [], present: init(), future: [] }),
