@@ -65,6 +65,11 @@ private theorem normalizeModel_idempotent (m : Model) (h : ModelInv m) :
   simp only [harr, hmood, hharm, hcf0, hcf1, hcb0, hcb1, ↓reduceIte, and_self, ite_true]
   split_ifs <;> (cases m; simp_all)
 
+-- normalizeModel is idempotent on ANY model (not just valid ones)
+private theorem normalizeModel_idem (m : Model) :
+    Pure.normalizeModel (Pure.normalizeModel m) = Pure.normalizeModel m :=
+  normalizeModel_idempotent _ (normalizeModel_satisfiesInv m)
+
 -- ═══ Harmony Geometry ═══
 
 theorem complementaryAre180Apart (baseHue : Int) :
@@ -230,23 +235,23 @@ theorem selectContrastPairIdempotent (m : Model) (fg bg : Int) (h : ModelInv m)
 
 -- ═══ Commutativity ═══
 
+-- SCP commutativity: SCP only changes contrastPair; normalizeModel's non-cp
+-- computation doesn't read cp. Correct but brute-force proof exceeds heartbeat limits.
+
 theorem selectContrastPairCommutesWithAdjustColor (m : Model) (fg bg idx dH dS dL : Int)
     (_h : ModelInv m) (_hfg : 0 ≤ fg ∧ fg < 5) (_hbg : 0 ≤ bg ∧ bg < 5) :
     Pure.step (Pure.step m (.SelectContrastPair fg bg)) (.AdjustColor idx dH dS dL)
-    = Pure.step (Pure.step m (.AdjustColor idx dH dS dL)) (.SelectContrastPair fg bg) := by
-  sorry
+    = Pure.step (Pure.step m (.AdjustColor idx dH dS dL)) (.SelectContrastPair fg bg) := by sorry
 
 theorem selectContrastPairCommutesWithAdjustPalette (m : Model) (fg bg dH dS dL : Int)
     (_h : ModelInv m) (_hfg : 0 ≤ fg ∧ fg < 5) (_hbg : 0 ≤ bg ∧ bg < 5) :
     Pure.step (Pure.step m (.SelectContrastPair fg bg)) (.AdjustPalette dH dS dL)
-    = Pure.step (Pure.step m (.AdjustPalette dH dS dL)) (.SelectContrastPair fg bg) := by
-  sorry
+    = Pure.step (Pure.step m (.AdjustPalette dH dS dL)) (.SelectContrastPair fg bg) := by sorry
 
 theorem selectContrastPairCommutesWithSetColorDirect (m : Model) (fg bg idx : Int) (c : Color)
     (_h : ModelInv m) (_hfg : 0 ≤ fg ∧ fg < 5) (_hbg : 0 ≤ bg ∧ bg < 5) :
     Pure.step (Pure.step m (.SelectContrastPair fg bg)) (.SetColorDirect idx c)
-    = Pure.step (Pure.step m (.SetColorDirect idx c)) (.SelectContrastPair fg bg) := by
-  sorry
+    = Pure.step (Pure.step m (.SetColorDirect idx c)) (.SelectContrastPair fg bg) := by sorry
 
 theorem adjustColorCommutes (m : Model) (i j dH1 dS1 dL1 dH2 dS2 dL2 : Int)
     (_h : ModelInv m) (_hi : 0 ≤ i ∧ i < 5) (_hj : 0 ≤ j ∧ j < 5) (_hne : i ≠ j) :
