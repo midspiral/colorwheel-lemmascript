@@ -425,7 +425,18 @@ theorem selectContrastPairCommutesWithSetColorDirect (m : Model) (fg bg idx : In
   · simp only [normalizeModel_idempotent m h]; exact (normalizeModel_idem _).symm
 
 theorem adjustColorCommutes (m : Model) (i j dH1 dS1 dL1 dH2 dS2 dL2 : Int)
-    (_h : ModelInv m) (_hi : 0 ≤ i ∧ i < 5) (_hj : 0 ≤ j ∧ j < 5) (_hne : i ≠ j) :
+    (_h : ModelInv m) (hi : 0 ≤ i ∧ i < 5) (hj : 0 ≤ j ∧ j < 5) (hne : i ≠ j) :
     Pure.step (Pure.step m (.AdjustColor i dH1 dS1 dL1)) (.AdjustColor j dH2 dS2 dL2)
     = Pure.step (Pure.step m (.AdjustColor j dH2 dS2 dL2)) (.AdjustColor i dH1 dS1 dL1) := by
-  sorry
+  -- Concrete indices: array set/get at different positions commute,
+  -- mood/harmony degradation is symmetric. 20 cases (5×5 minus diagonal).
+  set ni := i.toNat; set nj := j.toNat
+  have hieq : i = ↑ni := by omega
+  have hjeq : j = ↑nj := by omega
+  simp only [hieq, hjeq] at *
+  have hni : ni < 5 := by omega
+  have hnj : nj < 5 := by omega
+  -- Each concrete pair needs: colors commute (set! at different indices),
+  -- mood/harmony degrade symmetrically, then normalizeModel on equal models gives equal.
+  -- Requires Dafny-style helper lemmas (IndependentColors, MoodMonotonic, HarmonyMonotonic).
+  all_goals sorry
