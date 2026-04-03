@@ -37,7 +37,7 @@ npm run dev
 
 ## What's Verified
 
-30 functions, all proved with `loom_solve`. No sorry.
+31 functions, all proved with `loom_solve`. Plus `initSatisfiesInv` proved by `decide`.
 
 ### Helpers
 - **`clamp`** — ensures result in `[min, max]`
@@ -110,6 +110,7 @@ The TypeScript is the source of truth. The Lean is generated from it. The React 
 
 ## TODO
 
+- **`stepPreservesInv`** — `ModelInv(m) → ModelInv(step(m, a))`. Stated, not yet proved. The proof is mechanically straightforward (`normalizeModel` repairs any input) but requires case splitting across the 9-conjunct invariant. `initSatisfiesInv` is proved by `decide`.
 - **Behavioral properties** (from Dafny `ColorWheelProps.dfy`): commutativity, idempotence, monotonic degradation, field independence, recovery. These are standalone theorems building on the per-function proofs.
 
 ## Architecture

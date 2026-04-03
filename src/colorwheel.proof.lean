@@ -37,3 +37,12 @@ prove_correct applyAdjustPalette by loom_solve
 prove_correct normalizeModel by loom_solve
 prove_correct apply by loom_solve
 prove_correct step by loom_solve
+
+-- ═══ Invariant theorems ═══
+
+theorem initSatisfiesInv : ModelInv (Pure.init) := by decide
+
+-- TODO: prove normalizeModel always produces valid model,
+-- which implies StepPreservesInv
+theorem stepPreservesInv (m : Model) (a : Action) (h : ModelInv m) :
+    ModelInv (Pure.step m a) := by sorry
