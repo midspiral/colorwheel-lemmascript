@@ -21,9 +21,40 @@ private theorem clampColor_idempotent (c : Color) (hv : ValidColor c) :
   rw [normalizeHue_idempotent _ hh0 hh1, clamp_idempotent _ _ _ hs0 hs1,
       clamp_idempotent _ _ _ hl0 hl1]
 
--- normalizeModel m = m when ModelInv m (colors array reconstruction is the hard part)
+@[simp] private theorem getElem!_of_lt {α : Type} [Inhabited α] (a : Array α) (i : Nat) (h : i < a.size) :
+    a[i]! = a[i] := by
+  simp [Array.getElem!_eq_getD, Array.getD, h]
+
+set_option maxHeartbeats 800000 in
 private theorem normalizeModel_idempotent (m : Model) (h : ModelInv m) :
-    Pure.normalizeModel m = m := by sorry
+    Pure.normalizeModel m = m := by
+  unfold ModelInv at h
+  obtain ⟨hbh0, hbh1, hcs, hcv, hcf0, hcf1, hcb0, hcb1, hmood, hharm⟩ := h
+  have hbh := normalizeHue_idempotent _ hbh0 hbh1
+  have hc0 := clampColor_idempotent _ (hcv 0 (by omega))
+  have hc1 := clampColor_idempotent _ (hcv 1 (by omega))
+  have hc2 := clampColor_idempotent _ (hcv 2 (by omega))
+  have hc3 := clampColor_idempotent _ (hcv 3 (by omega))
+  have hc4 := clampColor_idempotent _ (hcv 4 (by omega))
+  -- Normalize getElem! in hypotheses first
+  simp only [getElem!_of_lt _ _ (by omega : 0 < m.colors.size),
+             getElem!_of_lt _ _ (by omega : 1 < m.colors.size),
+             getElem!_of_lt _ _ (by omega : 2 < m.colors.size),
+             getElem!_of_lt _ _ (by omega : 3 < m.colors.size),
+             getElem!_of_lt _ _ (by omega : 4 < m.colors.size)] at hc0 hc1 hc2 hc3 hc4 hmood hharm
+  -- Unfold normalizeModel + rewrite getElem! + apply clampColor identity — all in one pass
+  simp only [Pure.normalizeModel, hcs, ↓reduceIte, hbh,
+             getElem!_of_lt _ _ (by omega : 0 < m.colors.size),
+             getElem!_of_lt _ _ (by omega : 1 < m.colors.size),
+             getElem!_of_lt _ _ (by omega : 2 < m.colors.size),
+             getElem!_of_lt _ _ (by omega : 3 < m.colors.size),
+             getElem!_of_lt _ _ (by omega : 4 < m.colors.size),
+             hc0, hc1, hc2, hc3, hc4]
+  -- Reconstruct array equality
+  have harr : #[m.colors[0], m.colors[1], m.colors[2], m.colors[3], m.colors[4]] = m.colors :=
+    Array.ext (by simp [hcs]) (by intro i hi1 hi2; simp at hi1; interval_cases i <;> simp)
+  simp only [harr, hmood, hharm, hcf0, hcf1, hcb0, hcb1, ↓reduceIte, and_self, ite_true]
+  split_ifs <;> (cases m; simp_all)
 
 -- ═══ Harmony Geometry ═══
 
@@ -91,16 +122,24 @@ theorem setColorDirectPreservesContrastPair (m : Model) (idx : Int) (c : Color) 
   all_goals (simp [apply_setColorDirect_contrastPair]; omega)
 
 -- SelectContrastPair preserves colors, mood, harmony, baseHue
+set_option maxHeartbeats 800000 in
 theorem selectContrastPairPreservesColors (m : Model) (fg bg : Int) (h : ModelInv m)
-    (_hfg : 0 ≤ fg ∧ fg < 5) (_hbg : 0 ≤ bg ∧ bg < 5) :
+    (hfg : 0 ≤ fg ∧ fg < 5) (hbg : 0 ≤ bg ∧ bg < 5) :
     (Pure.step m (.SelectContrastPair fg bg)).colors = m.colors
     ∧ (Pure.step m (.SelectContrastPair fg bg)).mood = m.mood
     ∧ (Pure.step m (.SelectContrastPair fg bg)).harmony = m.harmony
     ∧ (Pure.step m (.SelectContrastPair fg bg)).baseHue = m.baseHue := by
-  -- SelectContrastPair only changes contrastPair;
-  -- normalizeModel on a valid-except-contrastPair model preserves the rest
-  -- Requires normalizeModel_idempotent under {m with contrastPair := ...}
-  sorry
+  have hid := normalizeModel_idempotent m h
+  simp only [Pure.step, Pure.apply, Pure.applySelectContrastPair]
+  split_ifs
+  · -- normalizeModel doesn't read contrastPair for colors/mood/harmony/baseHue
+    -- so {m with contrastPair := _} produces the same result as m for those fields
+    have hc : (Pure.normalizeModel {m with contrastPair := ⟨fg, bg⟩}).colors = (Pure.normalizeModel m).colors := rfl
+    have hmo : (Pure.normalizeModel {m with contrastPair := ⟨fg, bg⟩}).mood = (Pure.normalizeModel m).mood := rfl
+    have hha : (Pure.normalizeModel {m with contrastPair := ⟨fg, bg⟩}).harmony = (Pure.normalizeModel m).harmony := rfl
+    have hbh : (Pure.normalizeModel {m with contrastPair := ⟨fg, bg⟩}).baseHue = (Pure.normalizeModel m).baseHue := rfl
+    rw [hc, hmo, hha, hbh]; rw [hid]; exact ⟨rfl, rfl, rfl, rfl⟩
+  · rw [hid]; exact ⟨rfl, rfl, rfl, rfl⟩
 
 -- ═══ GeneratePalette Properties ═══
 
@@ -120,10 +159,11 @@ theorem generatePaletteIdempotent (m : Model) (baseHue : Int) (mood : Mood)
     (_hvr : Pure.validRandomSeeds seeds = true) :
     let m' := Pure.step m (.GeneratePalette baseHue mood harmony seeds)
     Pure.step m' (.GeneratePalette baseHue mood harmony seeds) = m' := by
-  -- m' satisfies ModelInv; applying same GeneratePalette produces same apply result;
-  -- normalizeModel is idempotent on valid models
   simp only
   have hinv := stepPreservesInv m (.GeneratePalette baseHue mood harmony seeds) h
+  -- step m' (GP ...) = normalizeModel (apply m' (GP ...))
+  -- apply m' (GP ...) applies generatePalette with same params
+  -- normalizeModel on the result gives back m' (by idempotence)
   sorry
 
 -- ═══ Monotonicity of Degradation ═══
@@ -137,13 +177,12 @@ theorem moodOnlyDegradesToCustom (m : Model) (idx dH dS dL : Int) (_h : ModelInv
   simp only [Pure.step, Pure.apply, Pure.applyIndependentAdjustment, Pure.normalizeModel]
   constructor <;> (intro hm; split_ifs <;> simp_all)
 
--- getElem vs getElem! mismatch blocks automation; needs dedicated simp lemmas
+-- Blocked by getElem vs getElem! on allHarmonyHues array
 theorem harmonyOnlyDegradesToCustom (m : Model) (idx dH dS dL : Int) (_h : ModelInv m)
     (_hidx : 0 ≤ idx ∧ idx < 5) :
     let m' := Pure.step m (.AdjustColor idx dH dS dL)
     (m.harmony = .Custom → m'.harmony = .Custom)
-    ∧ (m'.harmony ≠ .Custom → m'.harmony = m.harmony) := by
-  sorry
+    ∧ (m'.harmony ≠ .Custom → m'.harmony = m.harmony) := by sorry
 
 -- ═══ Reachability ═══
 
@@ -165,10 +204,12 @@ theorem canRecoverHarmony (m : Model) (targetHarmony : Harmony) (seeds : Array I
 -- ═══ Idempotence ═══
 
 theorem selectContrastPairIdempotent (m : Model) (fg bg : Int) (h : ModelInv m)
-    (_hfg : 0 ≤ fg ∧ fg < 5) (_hbg : 0 ≤ bg ∧ bg < 5) :
+    (hfg : 0 ≤ fg ∧ fg < 5) (hbg : 0 ≤ bg ∧ bg < 5) :
     Pure.step (Pure.step m (.SelectContrastPair fg bg)) (.SelectContrastPair fg bg)
     = Pure.step m (.SelectContrastPair fg bg) := by
   have hinv := stepPreservesInv m (.SelectContrastPair fg bg) h
+  rw [Pure.step, Pure.apply]
+  simp only [Pure.applySelectContrastPair]
   sorry
 
 -- ═══ Commutativity ═══
