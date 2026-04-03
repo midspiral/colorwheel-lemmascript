@@ -70,6 +70,10 @@ private theorem normalizeModel_idem (m : Model) :
     Pure.normalizeModel (Pure.normalizeModel m) = Pure.normalizeModel m :=
   normalizeModel_idempotent _ (normalizeModel_satisfiesInv m)
 
+@[simp] private theorem allHarmonyHues_size (baseHue : Int) (harmony : Harmony)
+    (h : harmony ≠ .Custom) : (Pure.allHarmonyHues baseHue harmony).size = 5 := by
+  cases harmony <;> simp_all [Pure.allHarmonyHues]
+
 -- ═══ Harmony Geometry ═══
 
 theorem complementaryAre180Apart (baseHue : Int) :
@@ -174,11 +178,18 @@ theorem generatePaletteIdempotent (m : Model) (baseHue : Int) (mood : Mood)
     let m' := Pure.step m (.GeneratePalette baseHue mood harmony seeds)
     Pure.step m' (.GeneratePalette baseHue mood harmony seeds) = m' := by
   simp only
-  have hinv := stepPreservesInv m (.GeneratePalette baseHue mood harmony seeds) h
-  -- step m' (GP ...) = normalizeModel (apply m' (GP ...))
-  -- apply m' (GP ...) applies generatePalette with same params
-  -- normalizeModel on the result gives back m' (by idempotence)
-  sorry
+  -- Both steps apply GP with same params: the only difference is contrastPair
+  -- (from m vs from normalizeModel result). normalizeModel's non-cp output is cp-independent (rfl).
+  simp only [Pure.step, Pure.apply, Pure.applyGeneratePalette, Pure.validBaseHue]
+  split_ifs with hv
+  · -- params invalid: contradicts preconditions
+    exfalso; simp_all [Pure.validBaseHue]
+  · -- params valid: two normalizeModel calls on inputs differing only in contrastPair
+    -- Show the contrastPair from normalizeModel equals m.contrastPair (ModelInv → valid cp)
+    unfold ModelInv at h; obtain ⟨_, _, _, _, hcf0, hcf1, hcb0, hcb1, _, _⟩ := h
+    rw [normalizeModel_preserves_contrastPair
+      (⟨baseHue, mood, harmony, Pure.generatePaletteColors baseHue mood harmony seeds,
+        m.contrastPair, 0, 0, 0⟩ : Model) hcf0 hcf1 hcb0 hcb1]
 
 -- ═══ Monotonicity of Degradation ═══
 
@@ -191,12 +202,20 @@ theorem moodOnlyDegradesToCustom (m : Model) (idx dH dS dL : Int) (_h : ModelInv
   simp only [Pure.step, Pure.apply, Pure.applyIndependentAdjustment, Pure.normalizeModel]
   constructor <;> (intro hm; split_ifs <;> simp_all)
 
--- Blocked: remaining cases need getElem!/getElem normalization on allHarmonyHues
-theorem harmonyOnlyDegradesToCustom (m : Model) (idx dH dS dL : Int) (_h : ModelInv m)
-    (_hidx : 0 ≤ idx ∧ idx < 5) :
+set_option maxHeartbeats 800000 in
+theorem harmonyOnlyDegradesToCustom (m : Model) (idx dH dS dL : Int) (h : ModelInv m)
+    (hidx : 0 ≤ idx ∧ idx < 5) :
     let m' := Pure.step m (.AdjustColor idx dH dS dL)
     (m.harmony = .Custom → m'.harmony = .Custom)
-    ∧ (m'.harmony ≠ .Custom → m'.harmony = m.harmony) := by sorry
+    ∧ (m'.harmony ≠ .Custom → m'.harmony = m.harmony) := by
+  unfold ModelInv at h; obtain ⟨_, _, hcs, _, _, _, _, _, _, _⟩ := h
+  simp only [Pure.step, Pure.apply, Pure.applyIndependentAdjustment, Pure.normalizeModel,
+             getElem!_of_lt _ _ (by omega : idx.toNat < m.colors.size)]
+  constructor <;> intro hm <;> split_ifs <;>
+    simp_all [getElem!_of_lt, allHarmonyHues_size]
+  -- One remaining: a[i] ≠ a[i]! is contradictory when size is known
+  exfalso; obtain ⟨_, hsz, habs⟩ := ‹_ ∧ _ ∧ ¬_›
+  rw [getElem!_of_lt _ _ (hsz ▸ by omega)] at habs; exact habs rfl
 
 -- ═══ Reachability ═══
 
