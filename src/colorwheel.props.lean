@@ -254,8 +254,26 @@ theorem selectContrastPairIdempotent (m : Model) (fg bg : Int) (h : ModelInv m)
 
 -- ═══ Commutativity ═══
 
--- SCP commutativity: SCP only changes contrastPair; normalizeModel's non-cp
--- computation doesn't read cp. Correct but brute-force proof exceeds heartbeat limits.
+-- Key helper: normalizeModel on two models that differ only in contrastPair
+-- produces the same result when given the same contrastPair override.
+-- This is because normalizeModel's non-cp computation is cp-independent.
+private lemma normalizeModel_cp_congr (m₁ m₂ : Model) (cp : ContrastPair)
+    (h : Pure.normalizeModel m₁ = Pure.normalizeModel m₂) :
+    Pure.normalizeModel {m₁ with contrastPair := cp}
+    = Pure.normalizeModel {m₂ with contrastPair := cp} := by
+  -- Non-cp fields of normalizeModel are cp-independent (rfl), so they match via h.
+  -- Cp field: both have same cp input, so normalizeModel produces same cp output.
+  cases m₁; cases m₂
+  simp only [Pure.normalizeModel, Model.mk.injEq] at h ⊢
+  exact ⟨h.1, h.2.1, h.2.2.1, h.2.2.2.1, trivial, h.2.2.2.2.2.1, h.2.2.2.2.2.2.1, h.2.2.2.2.2.2.2⟩
+
+-- All three SCP-commutes proofs follow the same pattern:
+-- valid SCP: use normalizeModel_cp_congr + normalizeModel_idem
+-- invalid SCP: contradicts hfg/hbg
+
+-- SCP commutativity: structurally correct (normalizeModel_cp_congr + normalizeModel_idem)
+-- but double-normalizeModel unfolding exceeds simp step limits.
+-- Needs field-level normalizeModel lemmas for efficient proof.
 
 theorem selectContrastPairCommutesWithAdjustColor (m : Model) (fg bg idx dH dS dL : Int)
     (_h : ModelInv m) (_hfg : 0 ≤ fg ∧ fg < 5) (_hbg : 0 ≤ bg ∧ bg < 5) :
