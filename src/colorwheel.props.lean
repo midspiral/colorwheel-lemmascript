@@ -424,6 +424,30 @@ theorem selectContrastPairCommutesWithSetColorDirect (m : Model) (fg bg idx : In
     exact normalizeModel_cp_congr _ _ _ (normalizeModel_idem _).symm
   · simp only [normalizeModel_idempotent m h]; exact (normalizeModel_idem _).symm
 
+-- Helper: adjIndep only modifies colors at index i, preserves baseHue/cp/adj
+private lemma adjIndep_baseHue (m : Model) (i dH dS dL : Int) :
+    (Pure.applyIndependentAdjustment m i dH dS dL).baseHue = m.baseHue := rfl
+
+private lemma adjIndep_contrastPair (m : Model) (i dH dS dL : Int) :
+    (Pure.applyIndependentAdjustment m i dH dS dL).contrastPair = m.contrastPair := rfl
+
+private lemma adjIndep_adjustmentH (m : Model) (i dH dS dL : Int) :
+    (Pure.applyIndependentAdjustment m i dH dS dL).adjustmentH = m.adjustmentH := rfl
+
+private lemma adjIndep_adjustmentS (m : Model) (i dH dS dL : Int) :
+    (Pure.applyIndependentAdjustment m i dH dS dL).adjustmentS = m.adjustmentS := rfl
+
+private lemma adjIndep_adjustmentL (m : Model) (i dH dS dL : Int) :
+    (Pure.applyIndependentAdjustment m i dH dS dL).adjustmentL = m.adjustmentL := rfl
+
+-- The second adjIndep (at j ≠ i) on normalizeModel(adjIndep(m,i,...)) produces the
+-- same result as if it operated on m directly (for the color at j), because
+-- normalizeModel preserves valid colors and adjIndep at i doesn't touch index j.
+-- This is the KEY structural lemma enabling commutativity.
+-- Rather than proving field-by-field, we show the full double-step equality
+-- by reducing to normalizeModel on equal models.
+
+set_option maxHeartbeats 12800000 in
 theorem adjustColorCommutes (m : Model) (i j dH1 dS1 dL1 dH2 dS2 dL2 : Int)
     (_h : ModelInv m) (hi : 0 ≤ i ∧ i < 5) (hj : 0 ≤ j ∧ j < 5) (hne : i ≠ j) :
     Pure.step (Pure.step m (.AdjustColor i dH1 dS1 dL1)) (.AdjustColor j dH2 dS2 dL2)
@@ -436,7 +460,19 @@ theorem adjustColorCommutes (m : Model) (i j dH1 dS1 dL1 dH2 dS2 dL2 : Int)
   simp only [hieq, hjeq] at *
   have hni : ni < 5 := by omega
   have hnj : nj < 5 := by omega
-  -- Each concrete pair needs: colors commute (set! at different indices),
-  -- mood/harmony degrade symmetrically, then normalizeModel on equal models gives equal.
-  -- Requires Dafny-style helper lemmas (IndependentColors, MoodMonotonic, HarmonyMonotonic).
-  all_goals sorry
+  interval_cases ni <;> interval_cases nj <;> simp_all
+  -- 20 off-diagonal cases remain. Reduce each to normalizeModel on equal models.
+  all_goals (
+    simp only [Pure.step, Pure.apply]
+    apply congr_arg Pure.normalizeModel
+    -- Show adjIndep(normalizeModel(adjIndep(m,k1,...)),k2,...) = adjIndep(normalizeModel(adjIndep(m,k2,...)),k1,...)
+    -- Both sides are Model structs. With concrete indices, colors set! commute.
+    -- Mood/harmony degradation is symmetric (same conditions, different order).
+    simp only [Pure.applyIndependentAdjustment, Pure.normalizeModel,
+               adjIndep_baseHue, adjIndep_contrastPair,
+               adjIndep_adjustmentH, adjIndep_adjustmentS, adjIndep_adjustmentL,
+               clampColor_idem, normalizeHue_idem]
+    -- The remaining equality is between two Model structs with the same fields
+    -- (colors commute at different indices, mood/harmony degrade symmetrically)
+    congr 1
+    all_goals (split_ifs <;> simp_all))
