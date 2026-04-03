@@ -104,117 +104,23 @@ method applyIndependentAdjustment (m : Model) (index : Int) (deltaH : Int) (delt
   require index < 5
   require (m.colors).size = 5
   do
-    let oldColor := m.colors[index.toNat]!
-    let _t0 ← clampColor { h := oldColor.h + deltaH, s := oldColor.s + deltaS, l := oldColor.l + deltaL }
-    let newColor := _t0
-    let _t1 ← allHarmonyHues m.baseHue m.harmony
-    let expectedHues := _t1
-    let hueChanged := expectedHues.size = 5 ∧ newColor.h ≠ expectedHues[index.toNat]!
-    let harmonyBroken := m.harmony ≠ .Custom ∧ hueChanged
-    let _t2 ← colorSatisfiesMood newColor m.mood
-    let moodBroken := m.mood ≠ .Custom ∧ ¬(_t2)
-    let newColors := m.colors.set! index.toNat newColor
-    let mut newHarmony : Harmony := m.harmony
-    if harmonyBroken then
-      newHarmony := .Custom
-    let mut newMood : Mood := m.mood
-    if moodBroken then
-      newMood := .Custom
-    return { m with colors := newColors, harmony := newHarmony, mood := newMood }
+    return Pure.applyIndependentAdjustment m index deltaH deltaS deltaL
 
 method applyLinkedAdjustment (m : Model) (deltaH : Int) (deltaS : Int) (deltaL : Int) return (res : Model)
   require (m.colors).size = 5
   do
-    let _t3 ← normalizeHue (m.baseHue + deltaH)
-    let newBaseHue := _t3
-    let _t4 ← allHarmonyHues newBaseHue m.harmony
-    let newHues := _t4
-    let mut adjustedColors : Array Color := default
-    if newHues.size = 5 then
-      let _t5 ← adjustColorSL m.colors[0]! newHues[0]! deltaS deltaL
-      let _t6 ← adjustColorSL m.colors[1]! newHues[1]! deltaS deltaL
-      let _t7 ← adjustColorSL m.colors[2]! newHues[2]! deltaS deltaL
-      let _t8 ← adjustColorSL m.colors[3]! newHues[3]! deltaS deltaL
-      let _t9 ← adjustColorSL m.colors[4]! newHues[4]! deltaS deltaL
-      adjustedColors := #[_t5, _t6, _t7, _t8, _t9]
-    else
-      let _t10 ← normalizeHue ((m.colors[0]!).h + deltaH)
-      let h0 := _t10
-      let _t11 ← normalizeHue ((m.colors[1]!).h + deltaH)
-      let h1 := _t11
-      let _t12 ← normalizeHue ((m.colors[2]!).h + deltaH)
-      let h2 := _t12
-      let _t13 ← normalizeHue ((m.colors[3]!).h + deltaH)
-      let h3 := _t13
-      let _t14 ← normalizeHue ((m.colors[4]!).h + deltaH)
-      let h4 := _t14
-      let _t15 ← adjustColorSL m.colors[0]! h0 deltaS deltaL
-      let _t16 ← adjustColorSL m.colors[1]! h1 deltaS deltaL
-      let _t17 ← adjustColorSL m.colors[2]! h2 deltaS deltaL
-      let _t18 ← adjustColorSL m.colors[3]! h3 deltaS deltaL
-      let _t19 ← adjustColorSL m.colors[4]! h4 deltaS deltaL
-      adjustedColors := #[_t15, _t16, _t17, _t18, _t19]
-    let _t20 ← allColorsSatisfyMood adjustedColors m.mood
-    let moodBroken := m.mood ≠ .Custom ∧ ¬(_t20)
-    let mut newMood : Mood := m.mood
-    if moodBroken then
-      newMood := .Custom
-    return { m with baseHue := newBaseHue, colors := adjustedColors, mood := newMood }
+    return Pure.applyLinkedAdjustment m deltaH deltaS deltaL
 
 method applySetColorDirect (m : Model) (index : Int) (color : Color) return (res : Model)
   require index ≥ 0
   require index < 5
   require (m.colors).size = 5
   do
-    let _t21 ← clampColor color
-    let clampedColor := _t21
-    let _t22 ← allHarmonyHues m.baseHue m.harmony
-    let expectedHues := _t22
-    let hueMatches := expectedHues.size = 5 ∧ clampedColor.h = expectedHues[index.toNat]!
-    let harmonyPreserved := m.harmony = .Custom ∨ hueMatches
-    let _t23 ← colorSatisfiesMood clampedColor m.mood
-    let moodPreserved := m.mood = .Custom ∨ _t23
-    let newColors := m.colors.set! index.toNat clampedColor
-    let mut newHarmony : Harmony := m.harmony
-    if ¬(harmonyPreserved) then
-      newHarmony := .Custom
-    let mut newMood : Mood := m.mood
-    if ¬(moodPreserved) then
-      newMood := .Custom
-    return { m with colors := newColors, harmony := newHarmony, mood := newMood }
+    return Pure.applySetColorDirect m index color
 
 method normalizeModel (m : Model) return (res : Model)
   do
-    let _t24 ← normalizeHue m.baseHue
-    let normalizedBaseHue := _t24
-    let mut normalizedColors : Array Color := default
-    if (m.colors).size = 5 then
-      let _t25 ← clampColor m.colors[0]!
-      let _t26 ← clampColor m.colors[1]!
-      let _t27 ← clampColor m.colors[2]!
-      let _t28 ← clampColor m.colors[3]!
-      let _t29 ← clampColor m.colors[4]!
-      normalizedColors := #[_t25, _t26, _t27, _t28, _t29]
-    else
-      normalizedColors := #[{ h := 0, s := 0, l := 0 }, { h := 0, s := 0, l := 0 }, { h := 0, s := 0, l := 0 }, { h := 0, s := 0, l := 0 }, { h := 0, s := 0, l := 0 }]
-    let mut normalizedContrastPair : ContrastPair := { fg := 0, bg := 1 }
-    if 0 ≤ (m.contrastPair).fg ∧ (m.contrastPair).fg < 5 ∧ 0 ≤ (m.contrastPair).bg ∧ (m.contrastPair).bg < 5 then
-      normalizedContrastPair := m.contrastPair
-    let mut finalMood : Mood := .Custom
-    if m.mood = .Custom then
-      finalMood := .Custom
-    else
-      let _t30 ← allColorsSatisfyMood normalizedColors m.mood
-      if _t30 then
-        finalMood := m.mood
-    let mut finalHarmony : Harmony := .Custom
-    if m.harmony = .Custom then
-      finalHarmony := .Custom
-    else
-      let _t31 ← huesMatchHarmony normalizedColors normalizedBaseHue m.harmony
-      if _t31 then
-        finalHarmony := m.harmony
-    return { m with baseHue := normalizedBaseHue, colors := normalizedColors, contrastPair := normalizedContrastPair, mood := finalMood, harmony := finalHarmony }
+    return Pure.normalizeModel m
 
 method validBaseHue (h : Int) return (res : Bool)
   do
@@ -237,9 +143,7 @@ method applyGeneratePalette (m : Model) (baseHue : Int) (mood : Mood) (harmony :
 method applyAdjustPalette (m : Model) (deltaH : Int) (deltaS : Int) (deltaL : Int) return (res : Model)
   require (m.colors).size = 5
   do
-    let _t32 ← applyLinkedAdjustment m deltaH deltaS deltaL
-    let adjusted := _t32
-    return { adjusted with adjustmentH := m.adjustmentH + deltaH, adjustmentS := m.adjustmentS + deltaS, adjustmentL := m.adjustmentL + deltaL }
+    return Pure.applyAdjustPalette m deltaH deltaS deltaL
 
 method applyRegenerateMood (m : Model) (mood : Mood) (randomSeeds : Array Int) return (res : Model)
   require (m.colors).size = 5
@@ -259,31 +163,7 @@ method applyRandomizeBaseHue (m : Model) (newBaseHue : Int) (randomSeeds : Array
 method apply (m : Model) (a : Action) return (res : Model)
   require (m.colors).size = 5
   do
-    match a with
-    | .GeneratePalette _baseHue _mood _harmony _randomSeeds =>
-      let _t33 ← applyGeneratePalette m _baseHue _mood _harmony _randomSeeds
-      return _t33
-    | .AdjustColor _index _deltaH _deltaS _deltaL =>
-      let _t34 ← applyIndependentAdjustment m _index _deltaH _deltaS _deltaL
-      return _t34
-    | .AdjustPalette _deltaH _deltaS _deltaL =>
-      let _t35 ← applyAdjustPalette m _deltaH _deltaS _deltaL
-      return _t35
-    | .SelectContrastPair _fg _bg =>
-      let _t36 ← applySelectContrastPair m _fg _bg
-      return _t36
-    | .SetColorDirect _index _color =>
-      let _t37 ← applySetColorDirect m _index _color
-      return _t37
-    | .RegenerateMood _mood _randomSeeds =>
-      let _t38 ← applyRegenerateMood m _mood _randomSeeds
-      return _t38
-    | .RegenerateHarmony _harmony _randomSeeds =>
-      let _t39 ← applyRegenerateHarmony m _harmony _randomSeeds
-      return _t39
-    | .RandomizeBaseHue _newBaseHue _randomSeeds =>
-      let _t40 ← applyRandomizeBaseHue m _newBaseHue _randomSeeds
-      return _t40
+    return Pure.apply m a
 
 method init  return (res : Model)
   do

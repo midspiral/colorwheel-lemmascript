@@ -250,10 +250,8 @@ function applyIndependentAdjustment(m: Model, index: number, deltaH: number, del
   const harmonyBroken = m.harmony !== "Custom" && hueChanged;
   const moodBroken = m.mood !== "Custom" && !colorSatisfiesMood(newColor, m.mood);
   const newColors = m.colors.with(index, newColor);
-  let newHarmony: Harmony = m.harmony;
-  if (harmonyBroken) { newHarmony = "Custom"; }
-  let newMood: Mood = m.mood;
-  if (moodBroken) { newMood = "Custom"; }
+  const newHarmony: Harmony = harmonyBroken ? "Custom" : m.harmony;
+  const newMood: Mood = moodBroken ? "Custom" : m.mood;
   return { ...m, colors: newColors, harmony: newHarmony, mood: newMood };
 }
 
@@ -261,28 +259,20 @@ function applyLinkedAdjustment(m: Model, deltaH: number, deltaS: number, deltaL:
   //@ requires m.colors.length === 5
   const newBaseHue = normalizeHue(m.baseHue + deltaH);
   const newHues = allHarmonyHues(newBaseHue, m.harmony);
-  let adjustedColors: Color[];
-  if (newHues.length === 5) {
-    adjustedColors = [adjustColorSL(m.colors[0], newHues[0], deltaS, deltaL),
+  const adjustedColors: Color[] =
+    newHues.length === 5
+      ? [adjustColorSL(m.colors[0], newHues[0], deltaS, deltaL),
          adjustColorSL(m.colors[1], newHues[1], deltaS, deltaL),
          adjustColorSL(m.colors[2], newHues[2], deltaS, deltaL),
          adjustColorSL(m.colors[3], newHues[3], deltaS, deltaL),
-         adjustColorSL(m.colors[4], newHues[4], deltaS, deltaL)];
-  } else {
-    const h0 = normalizeHue(m.colors[0].h + deltaH);
-    const h1 = normalizeHue(m.colors[1].h + deltaH);
-    const h2 = normalizeHue(m.colors[2].h + deltaH);
-    const h3 = normalizeHue(m.colors[3].h + deltaH);
-    const h4 = normalizeHue(m.colors[4].h + deltaH);
-    adjustedColors = [adjustColorSL(m.colors[0], h0, deltaS, deltaL),
-         adjustColorSL(m.colors[1], h1, deltaS, deltaL),
-         adjustColorSL(m.colors[2], h2, deltaS, deltaL),
-         adjustColorSL(m.colors[3], h3, deltaS, deltaL),
-         adjustColorSL(m.colors[4], h4, deltaS, deltaL)];
-  }
+         adjustColorSL(m.colors[4], newHues[4], deltaS, deltaL)]
+      : [adjustColorSL(m.colors[0], normalizeHue(m.colors[0].h + deltaH), deltaS, deltaL),
+         adjustColorSL(m.colors[1], normalizeHue(m.colors[1].h + deltaH), deltaS, deltaL),
+         adjustColorSL(m.colors[2], normalizeHue(m.colors[2].h + deltaH), deltaS, deltaL),
+         adjustColorSL(m.colors[3], normalizeHue(m.colors[3].h + deltaH), deltaS, deltaL),
+         adjustColorSL(m.colors[4], normalizeHue(m.colors[4].h + deltaH), deltaS, deltaL)];
   const moodBroken = m.mood !== "Custom" && !allColorsSatisfyMood(adjustedColors, m.mood);
-  let newMood: Mood = m.mood;
-  if (moodBroken) { newMood = "Custom"; }
+  const newMood: Mood = moodBroken ? "Custom" : m.mood;
   return { ...m, baseHue: newBaseHue, colors: adjustedColors, mood: newMood };
 }
 
@@ -295,10 +285,8 @@ function applySetColorDirect(m: Model, index: number, color: Color): Model {
   const harmonyPreserved = m.harmony === "Custom" || hueMatches;
   const moodPreserved = m.mood === "Custom" || colorSatisfiesMood(clampedColor, m.mood);
   const newColors = m.colors.with(index, clampedColor);
-  let newHarmony: Harmony = m.harmony;
-  if (!harmonyPreserved) { newHarmony = "Custom"; }
-  let newMood: Mood = m.mood;
-  if (!moodPreserved) { newMood = "Custom"; }
+  const newHarmony: Harmony = harmonyPreserved ? m.harmony : "Custom";
+  const newMood: Mood = moodPreserved ? m.mood : "Custom";
   return { ...m, colors: newColors, harmony: newHarmony, mood: newMood };
 }
 
@@ -306,30 +294,24 @@ function applySetColorDirect(m: Model, index: number, color: Color): Model {
 
 export function normalizeModel(m: Model): Model {
   const normalizedBaseHue = normalizeHue(m.baseHue);
-  let normalizedColors: Color[];
-  if (m.colors.length === 5) {
-    normalizedColors = [clampColor(m.colors[0]), clampColor(m.colors[1]), clampColor(m.colors[2]),
-         clampColor(m.colors[3]), clampColor(m.colors[4])];
-  } else {
-    normalizedColors = [{ h: 0, s: 0, l: 0 }, { h: 0, s: 0, l: 0 }, { h: 0, s: 0, l: 0 },
+  const normalizedColors: Color[] =
+    m.colors.length === 5
+      ? [clampColor(m.colors[0]), clampColor(m.colors[1]), clampColor(m.colors[2]),
+         clampColor(m.colors[3]), clampColor(m.colors[4])]
+      : [{ h: 0, s: 0, l: 0 }, { h: 0, s: 0, l: 0 }, { h: 0, s: 0, l: 0 },
          { h: 0, s: 0, l: 0 }, { h: 0, s: 0, l: 0 }];
-  }
-  let normalizedContrastPair: ContrastPair = { fg: 0, bg: 1 };
-  if (0 <= m.contrastPair.fg && m.contrastPair.fg < 5 && 0 <= m.contrastPair.bg && m.contrastPair.bg < 5) {
-    normalizedContrastPair = m.contrastPair;
-  }
-  let finalMood: Mood = "Custom";
-  if (m.mood === "Custom") {
-    finalMood = "Custom";
-  } else if (allColorsSatisfyMood(normalizedColors, m.mood)) {
-    finalMood = m.mood;
-  }
-  let finalHarmony: Harmony = "Custom";
-  if (m.harmony === "Custom") {
-    finalHarmony = "Custom";
-  } else if (huesMatchHarmony(normalizedColors, normalizedBaseHue, m.harmony)) {
-    finalHarmony = m.harmony;
-  }
+  const normalizedContrastPair: ContrastPair =
+    (0 <= m.contrastPair.fg && m.contrastPair.fg < 5 && 0 <= m.contrastPair.bg && m.contrastPair.bg < 5)
+      ? m.contrastPair
+      : { fg: 0, bg: 1 };
+  const finalMood: Mood =
+    m.mood === "Custom" ? "Custom"
+    : allColorsSatisfyMood(normalizedColors, m.mood) ? m.mood
+    : "Custom";
+  const finalHarmony: Harmony =
+    m.harmony === "Custom" ? "Custom"
+    : huesMatchHarmony(normalizedColors, normalizedBaseHue, m.harmony) ? m.harmony
+    : "Custom";
   return { ...m,
     baseHue: normalizedBaseHue,
     colors: normalizedColors,

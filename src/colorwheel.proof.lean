@@ -25,22 +25,14 @@ prove_correct generateColorGolden by loom_solve
 prove_correct generatePaletteColors by loom_solve
 prove_correct init by loom_solve
 
--- ═══ Transitions ═══
+-- ═══ Transitions (now pure with ternaries) ═══
 prove_correct applyGeneratePalette by loom_solve
 prove_correct applyRegenerateMood by loom_solve
 prove_correct applyRegenerateHarmony by loom_solve
 prove_correct applyRandomizeBaseHue by loom_solve
-
-set_option maxHeartbeats 1600000
 prove_correct applyIndependentAdjustment by loom_solve
 prove_correct applySetColorDirect by loom_solve
-
--- ═══ Sorry (3 remaining) ═══
--- applyLinkedAdjustment: times out (10 adjustColorSL calls across 2 branches)
-prove_correct applyLinkedAdjustment by sorry
--- applyAdjustPalette: depends on applyLinkedAdjustment
-prove_correct applyAdjustPalette by sorry
--- normalizeModel: Loom WPGen can't prove #[a,b,c,d,e].size = 5 for requires
-prove_correct normalizeModel by sorry
--- apply: depends on above
-prove_correct apply by sorry
+prove_correct applyLinkedAdjustment by loom_solve
+prove_correct applyAdjustPalette by loom_solve
+prove_correct normalizeModel by loom_solve
+prove_correct apply by loom_solve
