@@ -21,6 +21,15 @@ private theorem clampColor_idempotent (c : Color) (hv : ValidColor c) :
   rw [normalizeHue_idempotent _ hh0 hh1, clamp_idempotent _ _ _ hs0 hs1,
       clamp_idempotent _ _ _ hl0 hl1]
 
+@[simp] private theorem normalizeHue_idem (h : Int) :
+    Pure.normalizeHue (Pure.normalizeHue h) = Pure.normalizeHue h :=
+  normalizeHue_idempotent _ (by simp only [Pure.normalizeHue]; split <;> omega)
+    (by simp only [Pure.normalizeHue]; split <;> omega)
+
+@[simp] private theorem clampColor_idem (c : Color) :
+    Pure.clampColor (Pure.clampColor c) = Pure.clampColor c :=
+  clampColor_idempotent _ (by constructor <;> simp only [Pure.clampColor, Pure.normalizeHue, Pure.clamp] <;> split <;> omega)
+
 @[simp] private theorem getElem!_of_lt {α : Type} [Inhabited α] (a : Array α) (i : Nat) (h : i < a.size) :
     a[i]! = a[i] := by
   simp [Array.getElem!_eq_getD, Array.getD, h]
@@ -177,7 +186,7 @@ theorem moodOnlyDegradesToCustom (m : Model) (idx dH dS dL : Int) (_h : ModelInv
   simp only [Pure.step, Pure.apply, Pure.applyIndependentAdjustment, Pure.normalizeModel]
   constructor <;> (intro hm; split_ifs <;> simp_all)
 
--- Blocked by getElem vs getElem! on allHarmonyHues array
+-- Blocked: remaining cases need getElem!/getElem normalization on allHarmonyHues
 theorem harmonyOnlyDegradesToCustom (m : Model) (idx dH dS dL : Int) (_h : ModelInv m)
     (_hidx : 0 ≤ idx ∧ idx < 5) :
     let m' := Pure.step m (.AdjustColor idx dH dS dL)
@@ -203,14 +212,21 @@ theorem canRecoverHarmony (m : Model) (targetHarmony : Harmony) (seeds : Array I
 
 -- ═══ Idempotence ═══
 
+set_option maxHeartbeats 800000 in
 theorem selectContrastPairIdempotent (m : Model) (fg bg : Int) (h : ModelInv m)
     (hfg : 0 ≤ fg ∧ fg < 5) (hbg : 0 ≤ bg ∧ bg < 5) :
     Pure.step (Pure.step m (.SelectContrastPair fg bg)) (.SelectContrastPair fg bg)
     = Pure.step m (.SelectContrastPair fg bg) := by
-  have hinv := stepPreservesInv m (.SelectContrastPair fg bg) h
-  rw [Pure.step, Pure.apply]
-  simp only [Pure.applySelectContrastPair]
-  sorry
+  simp only [Pure.step, Pure.apply, Pure.applySelectContrastPair]
+  split_ifs with hv1
+  · -- normalizeModel {normalizeModel {m with cp} with cp} = normalizeModel {m with cp}
+    -- Non-cp fields: normalizeModel reads same inputs (rfl for cp independence)
+    -- cp field: same {fg,bg} on both sides
+    simp only [Pure.normalizeModel]; cases m; split_ifs <;> simp_all
+    -- Remaining: clampColor on defaults (decide) or ModelInv vs ¬size=5 (contradiction)
+    all_goals (first | decide | (exact absurd h.2.2.1 ‹_›) | (constructor <;> first | decide | exact absurd h.2.2.1 ‹_›))
+  · -- normalizeModel (normalizeModel m) = normalizeModel m
+    exact normalizeModel_idempotent _ (normalizeModel_satisfiesInv m)
 
 -- ═══ Commutativity ═══
 
