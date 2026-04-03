@@ -304,24 +304,65 @@ private lemma normalizeModel_cp_congr (m₁ m₂ : Model) (cp : ContrastPair)
 -- valid SCP: use normalizeModel_cp_congr + normalizeModel_idem
 -- invalid SCP: contradicts hfg/hbg
 
--- SCP commutativity: structurally correct (normalizeModel_cp_congr + normalizeModel_idem)
--- but double-normalizeModel unfolding exceeds simp step limits.
--- Needs field-level normalizeModel lemmas for efficient proof.
+-- {m with cp} satisfies ModelInv when m does and cp is valid
+private lemma modelInv_with_cp (m : Model) (cp : ContrastPair) (h : ModelInv m)
+    (h0 : 0 ≤ cp.fg) (h1 : cp.fg < 5) (h2 : 0 ≤ cp.bg) (h3 : cp.bg < 5) :
+    ModelInv {m with contrastPair := cp} := by
+  unfold ModelInv at h ⊢
+  exact ⟨h.1, h.2.1, h.2.2.1, h.2.2.2.1, h0, h1, h2, h3, h.2.2.2.2.2.2.2.2.1, h.2.2.2.2.2.2.2.2.2⟩
+
+-- Actions are cp-independent: applying to {m with cp} = {apply m with cp}
+-- These are rfl because the apply functions use { m with ... } overriding
+-- only non-cp fields, so cp passes through unchanged.
+private lemma adjIndep_cp (m : Model) (cp : ContrastPair) (idx dH dS dL : Int) :
+    Pure.applyIndependentAdjustment {m with contrastPair := cp} idx dH dS dL
+    = {Pure.applyIndependentAdjustment m idx dH dS dL with contrastPair := cp} := rfl
+
+private lemma adjPalette_cp (m : Model) (cp : ContrastPair) (dH dS dL : Int) :
+    Pure.applyAdjustPalette {m with contrastPair := cp} dH dS dL
+    = {Pure.applyAdjustPalette m dH dS dL with contrastPair := cp} := rfl
+
+private lemma setDirect_cp (m : Model) (cp : ContrastPair) (idx : Int) (c : Color) :
+    Pure.applySetColorDirect {m with contrastPair := cp} idx c
+    = {Pure.applySetColorDirect m idx c with contrastPair := cp} := rfl
+
+-- SCP commutativity: SCP only changes cp; other actions don't read cp.
+-- Proof: normalizeModel_idempotent on {m with cp} + normalizeModel_cp_congr + normalizeModel_idem.
 
 theorem selectContrastPairCommutesWithAdjustColor (m : Model) (fg bg idx dH dS dL : Int)
-    (_h : ModelInv m) (_hfg : 0 ≤ fg ∧ fg < 5) (_hbg : 0 ≤ bg ∧ bg < 5) :
+    (h : ModelInv m) (hfg : 0 ≤ fg ∧ fg < 5) (hbg : 0 ≤ bg ∧ bg < 5) :
     Pure.step (Pure.step m (.SelectContrastPair fg bg)) (.AdjustColor idx dH dS dL)
-    = Pure.step (Pure.step m (.AdjustColor idx dH dS dL)) (.SelectContrastPair fg bg) := by sorry
+    = Pure.step (Pure.step m (.AdjustColor idx dH dS dL)) (.SelectContrastPair fg bg) := by
+  simp only [Pure.step, Pure.apply, Pure.applySelectContrastPair]
+  split_ifs
+  · -- valid: use cp-independence rfl lemma + normalizeModel_cp_congr
+    rw [normalizeModel_idempotent _ (modelInv_with_cp m _ h hfg.1 hfg.2 hbg.1 hbg.2),
+        adjIndep_cp m ⟨fg, bg⟩ idx dH dS dL]
+    exact normalizeModel_cp_congr _ _ _ (normalizeModel_idem _).symm
+  · -- invalid: normalizeModel_idempotent + normalizeModel_idem
+    simp only [normalizeModel_idempotent m h]; exact (normalizeModel_idem _).symm
 
 theorem selectContrastPairCommutesWithAdjustPalette (m : Model) (fg bg dH dS dL : Int)
-    (_h : ModelInv m) (_hfg : 0 ≤ fg ∧ fg < 5) (_hbg : 0 ≤ bg ∧ bg < 5) :
+    (h : ModelInv m) (hfg : 0 ≤ fg ∧ fg < 5) (hbg : 0 ≤ bg ∧ bg < 5) :
     Pure.step (Pure.step m (.SelectContrastPair fg bg)) (.AdjustPalette dH dS dL)
-    = Pure.step (Pure.step m (.AdjustPalette dH dS dL)) (.SelectContrastPair fg bg) := by sorry
+    = Pure.step (Pure.step m (.AdjustPalette dH dS dL)) (.SelectContrastPair fg bg) := by
+  simp only [Pure.step, Pure.apply, Pure.applySelectContrastPair]
+  split_ifs
+  · rw [normalizeModel_idempotent _ (modelInv_with_cp m _ h hfg.1 hfg.2 hbg.1 hbg.2),
+        adjPalette_cp m ⟨fg, bg⟩ dH dS dL]
+    exact normalizeModel_cp_congr _ _ _ (normalizeModel_idem _).symm
+  · simp only [normalizeModel_idempotent m h]; exact (normalizeModel_idem _).symm
 
 theorem selectContrastPairCommutesWithSetColorDirect (m : Model) (fg bg idx : Int) (c : Color)
-    (_h : ModelInv m) (_hfg : 0 ≤ fg ∧ fg < 5) (_hbg : 0 ≤ bg ∧ bg < 5) :
+    (h : ModelInv m) (hfg : 0 ≤ fg ∧ fg < 5) (hbg : 0 ≤ bg ∧ bg < 5) :
     Pure.step (Pure.step m (.SelectContrastPair fg bg)) (.SetColorDirect idx c)
-    = Pure.step (Pure.step m (.SetColorDirect idx c)) (.SelectContrastPair fg bg) := by sorry
+    = Pure.step (Pure.step m (.SetColorDirect idx c)) (.SelectContrastPair fg bg) := by
+  simp only [Pure.step, Pure.apply, Pure.applySelectContrastPair]
+  split_ifs
+  · rw [normalizeModel_idempotent _ (modelInv_with_cp m _ h hfg.1 hfg.2 hbg.1 hbg.2),
+        setDirect_cp m ⟨fg, bg⟩ idx c]
+    exact normalizeModel_cp_congr _ _ _ (normalizeModel_idem _).symm
+  · simp only [normalizeModel_idempotent m h]; exact (normalizeModel_idem _).symm
 
 theorem adjustColorCommutes (m : Model) (i j dH1 dS1 dL1 dH2 dS2 dL2 : Int)
     (_h : ModelInv m) (_hi : 0 ≤ i ∧ i < 5) (_hj : 0 ≤ j ∧ j < 5) (_hne : i ≠ j) :
