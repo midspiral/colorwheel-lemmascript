@@ -403,6 +403,13 @@ export function apply(m: Model, a: Action): Model {
   }
 }
 
+// ═══ Step (Normalize ∘ Apply) ═══
+
+export function step(m: Model, a: Action): Model {
+  //@ requires m.colors.length === 5
+  return normalizeModel(apply(m, a));
+}
+
 // ═══ Init ═══
 
 export function init(): Model {

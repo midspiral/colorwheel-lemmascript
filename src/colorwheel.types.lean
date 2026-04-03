@@ -293,6 +293,9 @@ def apply (m : Model) (a : Action) : Model :=
   | .RandomizeBaseHue _newBaseHue _randomSeeds =>
     applyRandomizeBaseHue m _newBaseHue _randomSeeds
 
+def step (m : Model) (a : Action) : Model :=
+  normalizeModel (apply m a)
+
 def init  : Model :=
   let randomSeeds := #[50, 50, 50, 50, 50, 50, 50, 50, 50, 50]
   let baseHue := 180

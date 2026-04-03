@@ -165,6 +165,11 @@ method apply (m : Model) (a : Action) return (res : Model)
   do
     return Pure.apply m a
 
+method step (m : Model) (a : Action) return (res : Model)
+  require (m.colors).size = 5
+  do
+    return Pure.step m a
+
 method init  return (res : Model)
   do
     return Pure.init 

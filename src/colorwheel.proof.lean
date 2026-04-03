@@ -36,3 +36,4 @@ prove_correct applyLinkedAdjustment by loom_solve
 prove_correct applyAdjustPalette by loom_solve
 prove_correct normalizeModel by loom_solve
 prove_correct apply by loom_solve
+prove_correct step by loom_solve
