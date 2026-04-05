@@ -274,6 +274,15 @@ def applyRandomizeBaseHue (m : Model) (newBaseHue : Int) (randomSeeds : Array In
     let colors := generatePaletteColors newBaseHue m.mood m.harmony randomSeeds
     { m with baseHue := newBaseHue, colors := colors, adjustmentH := 0, adjustmentS := 0, adjustmentL := 0 }
 
+def validAction (a : Action) : Bool :=
+  match a with
+  | .AdjustColor _index _deltaH _deltaS _deltaL =>
+    _index ≥ 0 ∧ _index < 5
+  | .SetColorDirect _index _color =>
+    _index ≥ 0 ∧ _index < 5
+  | _ =>
+    true
+
 def apply (m : Model) (a : Action) : Model :=
   match a with
   | .GeneratePalette _baseHue _mood _harmony _randomSeeds =>

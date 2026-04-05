@@ -90,6 +90,7 @@ method generatePaletteColors (baseHue : Int) (mood : Mood) (harmony : Harmony) (
   require baseHue ≥ 0
   require baseHue < 360
   require randomSeeds.size = 10
+  require ∀ k : Nat, k < 10 → randomSeeds[k]! ≥ 0 ∧ randomSeeds[k]! ≤ 100
   do
     return Pure.generatePaletteColors baseHue mood harmony randomSeeds
 
@@ -147,11 +148,15 @@ method applyAdjustPalette (m : Model) (deltaH : Int) (deltaS : Int) (deltaL : In
 
 method applyRegenerateMood (m : Model) (mood : Mood) (randomSeeds : Array Int) return (res : Model)
   require (m.colors).size = 5
+  require m.baseHue ≥ 0
+  require m.baseHue < 360
   do
     return Pure.applyRegenerateMood m mood randomSeeds
 
 method applyRegenerateHarmony (m : Model) (harmony : Harmony) (randomSeeds : Array Int) return (res : Model)
   require (m.colors).size = 5
+  require m.baseHue ≥ 0
+  require m.baseHue < 360
   do
     return Pure.applyRegenerateHarmony m harmony randomSeeds
 
@@ -160,13 +165,23 @@ method applyRandomizeBaseHue (m : Model) (newBaseHue : Int) (randomSeeds : Array
   do
     return Pure.applyRandomizeBaseHue m newBaseHue randomSeeds
 
+method validAction (a : Action) return (res : Bool)
+  do
+    return Pure.validAction a
+
 method apply (m : Model) (a : Action) return (res : Model)
   require (m.colors).size = 5
+  require m.baseHue ≥ 0
+  require m.baseHue < 360
+  require Pure.validAction a
   do
     return Pure.apply m a
 
 method step (m : Model) (a : Action) return (res : Model)
   require (m.colors).size = 5
+  require m.baseHue ≥ 0
+  require m.baseHue < 360
+  require Pure.validAction a
   do
     return Pure.step m a
 

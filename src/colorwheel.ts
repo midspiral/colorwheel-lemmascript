@@ -218,6 +218,7 @@ function huesMatchHarmony(colors: Color[], baseHue: number, harmony: Harmony): b
 function generatePaletteColors(baseHue: number, mood: Mood, harmony: Harmony, randomSeeds: number[]): Color[] {
   //@ requires baseHue >= 0 && baseHue < 360
   //@ requires randomSeeds.length === 10
+  //@ requires forall(k: nat, k < 10 ==> randomSeeds[k] >= 0 && randomSeeds[k] <= 100)
   const hues = allHarmonyHues(baseHue, harmony);
   if (hues.length !== 5) {
     return [generateColorGolden(baseHue, mood, 0, randomSeeds[0], randomSeeds[1]),
@@ -367,6 +368,7 @@ function applyAdjustPalette(m: Model, deltaH: number, deltaS: number, deltaL: nu
 
 function applyRegenerateMood(m: Model, mood: Mood, randomSeeds: number[]): Model {
   //@ requires m.colors.length === 5
+  //@ requires m.baseHue >= 0 && m.baseHue < 360
   if (randomSeeds.length !== 10 || !validRandomSeeds(randomSeeds)) return m;
   const colors = generatePaletteColors(m.baseHue, mood, m.harmony, randomSeeds);
   return { ...m, mood: mood, colors: colors,
@@ -375,6 +377,7 @@ function applyRegenerateMood(m: Model, mood: Mood, randomSeeds: number[]): Model
 
 function applyRegenerateHarmony(m: Model, harmony: Harmony, randomSeeds: number[]): Model {
   //@ requires m.colors.length === 5
+  //@ requires m.baseHue >= 0 && m.baseHue < 360
   if (randomSeeds.length !== 10 || !validRandomSeeds(randomSeeds)) return m;
   const colors = generatePaletteColors(m.baseHue, m.mood, harmony, randomSeeds);
   return { ...m, harmony: harmony, colors: colors,
@@ -389,8 +392,19 @@ function applyRandomizeBaseHue(m: Model, newBaseHue: number, randomSeeds: number
            adjustmentH: 0, adjustmentS: 0, adjustmentL: 0 };
 }
 
+//@ pure
+function validAction(a: Action): boolean {
+  switch (a.tag) {
+    case "AdjustColor": return a.index >= 0 && a.index < 5;
+    case "SetColorDirect": return a.index >= 0 && a.index < 5;
+    default: return true;
+  }
+}
+
 export function apply(m: Model, a: Action): Model {
   //@ requires m.colors.length === 5
+  //@ requires m.baseHue >= 0 && m.baseHue < 360
+  //@ requires validAction(a)
   switch (a.tag) {
     case "GeneratePalette": return applyGeneratePalette(m, a.baseHue, a.mood, a.harmony, a.randomSeeds);
     case "AdjustColor": return applyIndependentAdjustment(m, a.index, a.deltaH, a.deltaS, a.deltaL);
@@ -407,6 +421,8 @@ export function apply(m: Model, a: Action): Model {
 
 export function step(m: Model, a: Action): Model {
   //@ requires m.colors.length === 5
+  //@ requires m.baseHue >= 0 && m.baseHue < 360
+  //@ requires validAction(a)
   return normalizeModel(apply(m, a));
 }
 
