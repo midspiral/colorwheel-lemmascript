@@ -72,11 +72,26 @@ src/
   colorwheel.spec.lean    <- Spec lemmas (randomInRange division bounds)
   colorwheel.def.lean     <- Generated: Velvet method definitions
   colorwheel.proof.lean   <- Proofs: all 30 prove_correct
+  colorwheel.props.lean   <- Behavioral properties (19 theorems)
+  colorwheel.dfy          <- Generated: Dafny specification
+  colorwheel.proofs.dfy   <- Dafny proofs: InitSatisfiesInv, StepPreservesInv, conservation (47 verified)
+  colorwheel.props.dfy    <- Dafny behavioral properties: commutativity, idempotence, reachability (44 verified)
+  colorwheel.sanity.dfy   <- Dafny NoOp completeness: CheckNoOps + NoOpImpliesUnchanged (24 verified)
   app.ts                  <- App layer: action constructors, undo/redo
   context/                <- React context
   components/             <- React UI (palette, sliders, contrast picker)
   App.jsx                 <- Main dashboard
 ```
+
+### Dafny Proofs
+
+The same spec is also verified in Dafny (115 lemmas total, 0 errors), ported from the [Dafny ColorWheel](https://github.com/metareflection/dafny-replay/tree/main/colorwheel):
+
+- **`colorwheel.proofs.dfy`** (47 verified) — `InitSatisfiesInv`, `StepPreservesInv`, palette generation validity, `NormalizeHue` arithmetic, harmony hue shift lemmas, `AdjustPaletteShiftsHues`
+- **`colorwheel.props.dfy`** (44 verified) — commutativity (SCP with AdjustColor/AdjustPalette/SetColorDirect), `AdjustColorCommutes`, `GeneratePaletteIdempotent`, mood/harmony monotonicity, reachability, field independence, harmony geometry
+- **`colorwheel.sanity.dfy`** (24 verified) — complete NoOp enumeration with `CheckNoOps` (completeness) and `NoOpImpliesUnchanged` (soundness)
+
+To regenerate after TS changes: `npx tsx ../lemmascript/tools/src/lsc.ts regen --backend=dafny src/colorwheel.ts`
 
 ## How It Works
 
