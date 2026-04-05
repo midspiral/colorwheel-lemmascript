@@ -39,6 +39,13 @@ function clamp(x: int, min: int, max: int): int
       x
 }
 
+lemma clamp_ensures(x: int, min: int, max: int)
+  requires (min <= max)
+  ensures (clamp(x, min, max) >= min)
+  ensures (clamp(x, min, max) <= max)
+{
+}
+
 function normalizeHue(h: int): int
 {
   var normalized := (h % 360);
@@ -48,9 +55,25 @@ function normalizeHue(h: int): int
     normalized
 }
 
+lemma normalizeHue_ensures(h: int)
+  ensures (normalizeHue(h) >= 0)
+  ensures (normalizeHue(h) < 360)
+{
+}
+
 function clampColor(c: Color): Color
 {
   Color(normalizeHue(c.h), clamp(c.s, 0, 100), clamp(c.l, 0, 100))
+}
+
+lemma clampColor_ensures(c: Color)
+  ensures (clampColor(c).h >= 0)
+  ensures (clampColor(c).h < 360)
+  ensures (clampColor(c).s >= 0)
+  ensures (clampColor(c).s <= 100)
+  ensures (clampColor(c).l >= 0)
+  ensures (clampColor(c).l <= 100)
+{
 }
 
 function moodBoundsOf(mood: Mood): MoodBoundsResult
@@ -102,6 +125,15 @@ function randomInRange(seed: int, min: int, max: int): int
     min
   else
     (min + JSFloorDiv((seed * (max - min)), 100))
+}
+
+lemma randomInRange_ensures(seed: int, min: int, max: int)
+  requires (seed >= 0)
+  requires (seed <= 100)
+  requires (min <= max)
+  ensures (randomInRange(seed, min, max) >= min)
+  ensures (randomInRange(seed, min, max) <= max)
+{
 }
 
 function goldenSLForMood(mood: Mood, colorIndex: int, seedS: int, seedL: int): SLPair
@@ -176,7 +208,7 @@ function allHarmonyHues(baseHue: int, harmony: Harmony): seq<int>
 
 function huesMatchHarmony(colors: seq<Color>, baseHue: int, harmony: Harmony): bool
 {
-  if (harmony == Harmony.Custom) then
+  if harmony.Custom? then
     true
   else
     var expectedHues := allHarmonyHues(baseHue, harmony);
@@ -215,8 +247,8 @@ function applyIndependentAdjustment(m: Model, index: int, deltaH: int, deltaS: i
   var newColor := clampColor(Color((oldColor.h + deltaH), (oldColor.s + deltaS), (oldColor.l + deltaL)));
   var expectedHues := allHarmonyHues(m.baseHue, m.harmony);
   var hueChanged := ((|expectedHues| == 5) && (newColor.h != expectedHues[index]));
-  var harmonyBroken := ((m.harmony != Harmony.Custom) && hueChanged);
-  var moodBroken := ((m.mood != Mood.Custom) && !(colorSatisfiesMood(newColor, m.mood)));
+  var harmonyBroken := ((!m.harmony.Custom?) && hueChanged);
+  var moodBroken := ((!m.mood.Custom?) && !(colorSatisfiesMood(newColor, m.mood)));
   var newColors := m.colors[index := newColor];
   var newHarmony := if harmonyBroken then Harmony.Custom else m.harmony;
   var newMood := if moodBroken then Mood.Custom else m.mood;
@@ -229,7 +261,7 @@ function applyLinkedAdjustment(m: Model, deltaH: int, deltaS: int, deltaL: int):
   var newBaseHue := normalizeHue((m.baseHue + deltaH));
   var newHues := allHarmonyHues(newBaseHue, m.harmony);
   var adjustedColors := if (|newHues| == 5) then [adjustColorSL(m.colors[0], newHues[0], deltaS, deltaL), adjustColorSL(m.colors[1], newHues[1], deltaS, deltaL), adjustColorSL(m.colors[2], newHues[2], deltaS, deltaL), adjustColorSL(m.colors[3], newHues[3], deltaS, deltaL), adjustColorSL(m.colors[4], newHues[4], deltaS, deltaL)] else [adjustColorSL(m.colors[0], normalizeHue((m.colors[0].h + deltaH)), deltaS, deltaL), adjustColorSL(m.colors[1], normalizeHue((m.colors[1].h + deltaH)), deltaS, deltaL), adjustColorSL(m.colors[2], normalizeHue((m.colors[2].h + deltaH)), deltaS, deltaL), adjustColorSL(m.colors[3], normalizeHue((m.colors[3].h + deltaH)), deltaS, deltaL), adjustColorSL(m.colors[4], normalizeHue((m.colors[4].h + deltaH)), deltaS, deltaL)];
-  var moodBroken := ((m.mood != Mood.Custom) && !(allColorsSatisfyMood(adjustedColors, m.mood)));
+  var moodBroken := ((!m.mood.Custom?) && !(allColorsSatisfyMood(adjustedColors, m.mood)));
   var newMood := if moodBroken then Mood.Custom else m.mood;
   m.(baseHue := newBaseHue, colors := adjustedColors, mood := newMood)
 }
@@ -242,8 +274,8 @@ function applySetColorDirect(m: Model, index: int, color: Color): Model
   var clampedColor := clampColor(color);
   var expectedHues := allHarmonyHues(m.baseHue, m.harmony);
   var hueMatches := ((|expectedHues| == 5) && (clampedColor.h == expectedHues[index]));
-  var harmonyPreserved := ((m.harmony == Harmony.Custom) || hueMatches);
-  var moodPreserved := ((m.mood == Mood.Custom) || colorSatisfiesMood(clampedColor, m.mood));
+  var harmonyPreserved := (m.harmony.Custom? || hueMatches);
+  var moodPreserved := (m.mood.Custom? || colorSatisfiesMood(clampedColor, m.mood));
   var newColors := m.colors[index := clampedColor];
   var newHarmony := if harmonyPreserved then m.harmony else Harmony.Custom;
   var newMood := if moodPreserved then m.mood else Mood.Custom;
@@ -255,8 +287,8 @@ function normalizeModel(m: Model): Model
   var normalizedBaseHue := normalizeHue(m.baseHue);
   var normalizedColors := if (|m.colors| == 5) then [clampColor(m.colors[0]), clampColor(m.colors[1]), clampColor(m.colors[2]), clampColor(m.colors[3]), clampColor(m.colors[4])] else [Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0)];
   var normalizedContrastPair := if ((((0 <= m.contrastPair.fg) && (m.contrastPair.fg < 5)) && (0 <= m.contrastPair.bg)) && (m.contrastPair.bg < 5)) then m.contrastPair else ContrastPair(0, 1);
-  var finalMood := if (m.mood == Mood.Custom) then Mood.Custom else if allColorsSatisfyMood(normalizedColors, m.mood) then m.mood else Mood.Custom;
-  var finalHarmony := if (m.harmony == Harmony.Custom) then Harmony.Custom else if huesMatchHarmony(normalizedColors, normalizedBaseHue, m.harmony) then m.harmony else Harmony.Custom;
+  var finalMood := if m.mood.Custom? then Mood.Custom else if allColorsSatisfyMood(normalizedColors, m.mood) then m.mood else Mood.Custom;
+  var finalHarmony := if m.harmony.Custom? then Harmony.Custom else if huesMatchHarmony(normalizedColors, normalizedBaseHue, m.harmony) then m.harmony else Harmony.Custom;
   m.(baseHue := normalizedBaseHue, colors := normalizedColors, contrastPair := normalizedContrastPair, mood := finalMood, harmony := finalHarmony)
 }
 
