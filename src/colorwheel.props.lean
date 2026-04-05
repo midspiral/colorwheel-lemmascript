@@ -447,9 +447,28 @@ private lemma adjIndep_adjustmentL (m : Model) (i dH dS dL : Int) :
 -- Rather than proving field-by-field, we show the full double-step equality
 -- by reducing to normalizeModel on equal models.
 
--- TODO: proof times out (pre-existing issue, needs restructuring to avoid 20-case simp_all explosion)
+set_option maxHeartbeats 12800000 in
 theorem adjustColorCommutes (m : Model) (i j dH1 dS1 dL1 dH2 dS2 dL2 : Int)
     (_h : ModelInv m) (hi : 0 ≤ i ∧ i < 5) (hj : 0 ≤ j ∧ j < 5) (hne : i ≠ j) :
     Pure.step (Pure.step m (.AdjustColor i dH1 dS1 dL1)) (.AdjustColor j dH2 dS2 dL2)
     = Pure.step (Pure.step m (.AdjustColor j dH2 dS2 dL2)) (.AdjustColor i dH1 dS1 dL1) := by
-  sorry
+  -- Eliminate validAction guards up front
+  have hgi : ¬(i < 0 ∨ i ≥ 5) := by omega
+  have hgj : ¬(j < 0 ∨ j ≥ 5) := by omega
+  simp only [Pure.step, Pure.apply, hgi, hgj, ↓reduceIte]
+  -- Now same shape as original: normalizeModel(adjIndep(normalizeModel(adjIndep(m,...)),...))
+  set ni := i.toNat; set nj := j.toNat
+  have hieq : i = ↑ni := by omega
+  have hjeq : j = ↑nj := by omega
+  simp only [hieq, hjeq] at *
+  have hni : ni < 5 := by omega
+  have hnj : nj < 5 := by omega
+  interval_cases ni <;> interval_cases nj <;> simp_all
+  all_goals (
+    apply congr_arg Pure.normalizeModel
+    simp only [Pure.applyIndependentAdjustment, Pure.normalizeModel,
+               adjIndep_baseHue, adjIndep_contrastPair,
+               adjIndep_adjustmentH, adjIndep_adjustmentS, adjIndep_adjustmentL,
+               clampColor_idem, normalizeHue_idem]
+    congr 1
+    all_goals (split_ifs <;> simp_all))
