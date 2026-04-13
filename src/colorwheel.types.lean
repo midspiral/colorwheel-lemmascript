@@ -276,31 +276,31 @@ def applyRandomizeBaseHue (m : Model) (newBaseHue : Int) (randomSeeds : Array In
 
 def validAction (a : Action) : Bool :=
   match a with
-  | .AdjustColor _index _deltaH _deltaS _deltaL =>
-    _index ≥ 0 ∧ _index < 5
-  | .SetColorDirect _index _color =>
-    _index ≥ 0 ∧ _index < 5
+  | .AdjustColor _a_index _a_deltaH _a_deltaS _a_deltaL =>
+    _a_index ≥ 0 ∧ _a_index < 5
+  | .SetColorDirect _a_index _a_color =>
+    _a_index ≥ 0 ∧ _a_index < 5
   | _ =>
     true
 
 def apply (m : Model) (a : Action) : Model :=
   match a with
-  | .GeneratePalette _baseHue _mood _harmony _randomSeeds =>
-    applyGeneratePalette m _baseHue _mood _harmony _randomSeeds
-  | .AdjustColor _index _deltaH _deltaS _deltaL =>
-    applyIndependentAdjustment m _index _deltaH _deltaS _deltaL
-  | .AdjustPalette _deltaH _deltaS _deltaL =>
-    applyAdjustPalette m _deltaH _deltaS _deltaL
-  | .SelectContrastPair _fg _bg =>
-    applySelectContrastPair m _fg _bg
-  | .SetColorDirect _index _color =>
-    applySetColorDirect m _index _color
-  | .RegenerateMood _mood _randomSeeds =>
-    applyRegenerateMood m _mood _randomSeeds
-  | .RegenerateHarmony _harmony _randomSeeds =>
-    applyRegenerateHarmony m _harmony _randomSeeds
-  | .RandomizeBaseHue _newBaseHue _randomSeeds =>
-    applyRandomizeBaseHue m _newBaseHue _randomSeeds
+  | .GeneratePalette _a_baseHue _a_mood _a_harmony _a_randomSeeds =>
+    applyGeneratePalette m _a_baseHue _a_mood _a_harmony _a_randomSeeds
+  | .AdjustColor _a_index _a_deltaH _a_deltaS _a_deltaL =>
+    applyIndependentAdjustment m _a_index _a_deltaH _a_deltaS _a_deltaL
+  | .AdjustPalette _a_deltaH _a_deltaS _a_deltaL =>
+    applyAdjustPalette m _a_deltaH _a_deltaS _a_deltaL
+  | .SelectContrastPair _a_fg _a_bg =>
+    applySelectContrastPair m _a_fg _a_bg
+  | .SetColorDirect _a_index _a_color =>
+    applySetColorDirect m _a_index _a_color
+  | .RegenerateMood _a_mood _a_randomSeeds =>
+    applyRegenerateMood m _a_mood _a_randomSeeds
+  | .RegenerateHarmony _a_harmony _a_randomSeeds =>
+    applyRegenerateHarmony m _a_harmony _a_randomSeeds
+  | .RandomizeBaseHue _a_newBaseHue _a_randomSeeds =>
+    applyRandomizeBaseHue m _a_newBaseHue _a_randomSeeds
 
 def step (m : Model) (a : Action) : Model :=
   normalizeModel (apply m a)
