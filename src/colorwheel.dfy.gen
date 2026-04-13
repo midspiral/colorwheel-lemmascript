@@ -365,10 +365,10 @@ function applyRandomizeBaseHue(m: Model, newBaseHue: int, randomSeeds: seq<int>)
 function validAction(a: Action): bool
 {
   match a {
-    case AdjustColor(i_index, i_deltaH, i_deltaS, i_deltaL) =>
-      ((i_index >= 0) && (i_index < 5))
-    case SetColorDirect(i_index, i_color) =>
-      ((i_index >= 0) && (i_index < 5))
+    case AdjustColor(i_a_index, i_a_deltaH, i_a_deltaS, i_a_deltaL) =>
+      ((i_a_index >= 0) && (i_a_index < 5))
+    case SetColorDirect(i_a_index, i_a_color) =>
+      ((i_a_index >= 0) && (i_a_index < 5))
     case _ =>
       true
   }
@@ -381,22 +381,22 @@ function apply(m: Model, a: Action): Model
   requires validAction(a)
 {
   match a {
-    case GeneratePalette(i_baseHue, i_mood, i_harmony, i_randomSeeds) =>
-      applyGeneratePalette(m, i_baseHue, i_mood, i_harmony, i_randomSeeds)
-    case AdjustColor(i_index, i_deltaH, i_deltaS, i_deltaL) =>
-      applyIndependentAdjustment(m, i_index, i_deltaH, i_deltaS, i_deltaL)
-    case AdjustPalette(i_deltaH, i_deltaS, i_deltaL) =>
-      applyAdjustPalette(m, i_deltaH, i_deltaS, i_deltaL)
-    case SelectContrastPair(i_fg, i_bg) =>
-      applySelectContrastPair(m, i_fg, i_bg)
-    case SetColorDirect(i_index, i_color) =>
-      applySetColorDirect(m, i_index, i_color)
-    case RegenerateMood(i_mood, i_randomSeeds) =>
-      applyRegenerateMood(m, i_mood, i_randomSeeds)
-    case RegenerateHarmony(i_harmony, i_randomSeeds) =>
-      applyRegenerateHarmony(m, i_harmony, i_randomSeeds)
-    case RandomizeBaseHue(i_newBaseHue, i_randomSeeds) =>
-      applyRandomizeBaseHue(m, i_newBaseHue, i_randomSeeds)
+    case GeneratePalette(i_a_baseHue, i_a_mood, i_a_harmony, i_a_randomSeeds) =>
+      applyGeneratePalette(m, i_a_baseHue, i_a_mood, i_a_harmony, i_a_randomSeeds)
+    case AdjustColor(i_a_index, i_a_deltaH, i_a_deltaS, i_a_deltaL) =>
+      applyIndependentAdjustment(m, i_a_index, i_a_deltaH, i_a_deltaS, i_a_deltaL)
+    case AdjustPalette(i_a_deltaH, i_a_deltaS, i_a_deltaL) =>
+      applyAdjustPalette(m, i_a_deltaH, i_a_deltaS, i_a_deltaL)
+    case SelectContrastPair(i_a_fg, i_a_bg) =>
+      applySelectContrastPair(m, i_a_fg, i_a_bg)
+    case SetColorDirect(i_a_index, i_a_color) =>
+      applySetColorDirect(m, i_a_index, i_a_color)
+    case RegenerateMood(i_a_mood, i_a_randomSeeds) =>
+      applyRegenerateMood(m, i_a_mood, i_a_randomSeeds)
+    case RegenerateHarmony(i_a_harmony, i_a_randomSeeds) =>
+      applyRegenerateHarmony(m, i_a_harmony, i_a_randomSeeds)
+    case RandomizeBaseHue(i_a_newBaseHue, i_a_randomSeeds) =>
+      applyRandomizeBaseHue(m, i_a_newBaseHue, i_a_randomSeeds)
   }
 }
 
