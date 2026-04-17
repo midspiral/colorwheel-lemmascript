@@ -172,14 +172,8 @@ def allHarmonyHues (baseHue : Int) (harmony : Harmony) : Array Int :=
     #[]
 
 def huesMatchHarmony (colors : Array Color) (baseHue : Int) (harmony : Harmony) : Bool :=
-  if harmony = .Custom then
-    true
-  else
-    let expectedHues := allHarmonyHues baseHue harmony
-    if colors.size ≠ 5 ∨ expectedHues.size ≠ 5 then
-      false
-    else
-      (colors[0]!).h = expectedHues[0]! ∧ (colors[1]!).h = expectedHues[1]! ∧ (colors[2]!).h = expectedHues[2]! ∧ (colors[3]!).h = expectedHues[3]! ∧ (colors[4]!).h = expectedHues[4]!
+  harmony = .Custom ∨ let expectedHues := allHarmonyHues baseHue harmony
+if colors.size ≠ 5 ∨ expectedHues.size ≠ 5 then false else (colors[0]!).h = expectedHues[0]! ∧ (colors[1]!).h = expectedHues[1]! ∧ (colors[2]!).h = expectedHues[2]! ∧ (colors[3]!).h = expectedHues[3]! ∧ (colors[4]!).h = expectedHues[4]!
 
 def generatePaletteColors (baseHue : Int) (mood : Mood) (harmony : Harmony) (randomSeeds : Array Int) : Array Color :=
   let hues := allHarmonyHues baseHue harmony

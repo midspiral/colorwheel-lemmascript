@@ -208,14 +208,7 @@ function allHarmonyHues(baseHue: int, harmony: Harmony): seq<int>
 
 function huesMatchHarmony(colors: seq<Color>, baseHue: int, harmony: Harmony): bool
 {
-  if harmony.Custom? then
-    true
-  else
-    var expectedHues := allHarmonyHues(baseHue, harmony);
-    if ((|colors| != 5) || (|expectedHues| != 5)) then
-      false
-    else
-      (((((colors[0].h == expectedHues[0]) && (colors[1].h == expectedHues[1])) && (colors[2].h == expectedHues[2])) && (colors[3].h == expectedHues[3])) && (colors[4].h == expectedHues[4]))
+  (harmony.Custom? || var expectedHues := allHarmonyHues(baseHue, harmony); if ((|colors| != 5) || (|expectedHues| != 5)) then false else (((((colors[0].h == expectedHues[0]) && (colors[1].h == expectedHues[1])) && (colors[2].h == expectedHues[2])) && (colors[3].h == expectedHues[3])) && (colors[4].h == expectedHues[4])))
 }
 
 function generatePaletteColors(baseHue: int, mood: Mood, harmony: Harmony, randomSeeds: seq<int>): seq<Color>
