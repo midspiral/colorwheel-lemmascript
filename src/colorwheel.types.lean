@@ -172,7 +172,7 @@ def allHarmonyHues (baseHue : Int) (harmony : Harmony) : Array Int :=
     #[]
 
 def huesMatchHarmony (colors : Array Color) (baseHue : Int) (harmony : Harmony) : Bool :=
-  if harmony = .Custom then
+  if harmony = Harmony.Custom then
     true
   else
     let expectedHues := allHarmonyHues baseHue harmony
@@ -196,38 +196,38 @@ def applyIndependentAdjustment (m : Model) (index : Int) (deltaH : Int) (deltaS 
   let newColor := clampColor { h := oldColor.h + deltaH, s := oldColor.s + deltaS, l := oldColor.l + deltaL }
   let expectedHues := allHarmonyHues m.baseHue m.harmony
   let hueChanged := expectedHues.size = 5 ∧ newColor.h ≠ expectedHues[index.toNat]!
-  let harmonyBroken := m.harmony ≠ .Custom ∧ hueChanged
-  let moodBroken := m.mood ≠ .Custom ∧ ¬(colorSatisfiesMood newColor m.mood)
+  let harmonyBroken := m.harmony ≠ Harmony.Custom ∧ hueChanged
+  let moodBroken := m.mood ≠ Mood.Custom ∧ ¬(colorSatisfiesMood newColor m.mood)
   let newColors := m.colors.set! index.toNat newColor
-  let newHarmony := if harmonyBroken then .Custom else m.harmony
-  let newMood := if moodBroken then .Custom else m.mood
+  let newHarmony := if harmonyBroken then Harmony.Custom else m.harmony
+  let newMood := if moodBroken then Mood.Custom else m.mood
   { m with colors := newColors, harmony := newHarmony, mood := newMood }
 
 def applyLinkedAdjustment (m : Model) (deltaH : Int) (deltaS : Int) (deltaL : Int) : Model :=
   let newBaseHue := normalizeHue (m.baseHue + deltaH)
   let newHues := allHarmonyHues newBaseHue m.harmony
   let adjustedColors := if newHues.size = 5 then #[adjustColorSL m.colors[0]! newHues[0]! deltaS deltaL, adjustColorSL m.colors[1]! newHues[1]! deltaS deltaL, adjustColorSL m.colors[2]! newHues[2]! deltaS deltaL, adjustColorSL m.colors[3]! newHues[3]! deltaS deltaL, adjustColorSL m.colors[4]! newHues[4]! deltaS deltaL] else #[adjustColorSL m.colors[0]! (normalizeHue ((m.colors[0]!).h + deltaH)) deltaS deltaL, adjustColorSL m.colors[1]! (normalizeHue ((m.colors[1]!).h + deltaH)) deltaS deltaL, adjustColorSL m.colors[2]! (normalizeHue ((m.colors[2]!).h + deltaH)) deltaS deltaL, adjustColorSL m.colors[3]! (normalizeHue ((m.colors[3]!).h + deltaH)) deltaS deltaL, adjustColorSL m.colors[4]! (normalizeHue ((m.colors[4]!).h + deltaH)) deltaS deltaL]
-  let moodBroken := m.mood ≠ .Custom ∧ ¬(allColorsSatisfyMood adjustedColors m.mood)
-  let newMood := if moodBroken then .Custom else m.mood
+  let moodBroken := m.mood ≠ Mood.Custom ∧ ¬(allColorsSatisfyMood adjustedColors m.mood)
+  let newMood := if moodBroken then Mood.Custom else m.mood
   { m with baseHue := newBaseHue, colors := adjustedColors, mood := newMood }
 
 def applySetColorDirect (m : Model) (index : Int) (color : Color) : Model :=
   let clampedColor := clampColor color
   let expectedHues := allHarmonyHues m.baseHue m.harmony
   let hueMatches := expectedHues.size = 5 ∧ clampedColor.h = expectedHues[index.toNat]!
-  let harmonyPreserved := m.harmony = .Custom ∨ hueMatches
-  let moodPreserved := m.mood = .Custom ∨ colorSatisfiesMood clampedColor m.mood
+  let harmonyPreserved := m.harmony = Harmony.Custom ∨ hueMatches
+  let moodPreserved := m.mood = Mood.Custom ∨ colorSatisfiesMood clampedColor m.mood
   let newColors := m.colors.set! index.toNat clampedColor
-  let newHarmony := if harmonyPreserved then m.harmony else .Custom
-  let newMood := if moodPreserved then m.mood else .Custom
+  let newHarmony := if harmonyPreserved then m.harmony else Harmony.Custom
+  let newMood := if moodPreserved then m.mood else Mood.Custom
   { m with colors := newColors, harmony := newHarmony, mood := newMood }
 
 def normalizeModel (m : Model) : Model :=
   let normalizedBaseHue := normalizeHue m.baseHue
   let normalizedColors := if (m.colors).size = 5 then #[clampColor m.colors[0]!, clampColor m.colors[1]!, clampColor m.colors[2]!, clampColor m.colors[3]!, clampColor m.colors[4]!] else #[{ h := 0, s := 0, l := 0 }, { h := 0, s := 0, l := 0 }, { h := 0, s := 0, l := 0 }, { h := 0, s := 0, l := 0 }, { h := 0, s := 0, l := 0 }]
   let normalizedContrastPair := if 0 ≤ (m.contrastPair).fg ∧ (m.contrastPair).fg < 5 ∧ 0 ≤ (m.contrastPair).bg ∧ (m.contrastPair).bg < 5 then m.contrastPair else { fg := 0, bg := 1 }
-  let finalMood := if m.mood = .Custom then .Custom else if allColorsSatisfyMood normalizedColors m.mood then m.mood else .Custom
-  let finalHarmony := if m.harmony = .Custom then .Custom else if huesMatchHarmony normalizedColors normalizedBaseHue m.harmony then m.harmony else .Custom
+  let finalMood := if m.mood = Mood.Custom then Mood.Custom else if allColorsSatisfyMood normalizedColors m.mood then m.mood else Mood.Custom
+  let finalHarmony := if m.harmony = Harmony.Custom then Harmony.Custom else if huesMatchHarmony normalizedColors normalizedBaseHue m.harmony then m.harmony else Harmony.Custom
   { m with baseHue := normalizedBaseHue, colors := normalizedColors, contrastPair := normalizedContrastPair, mood := finalMood, harmony := finalHarmony }
 
 def validBaseHue (h : Int) : Bool :=
@@ -308,8 +308,8 @@ def step (m : Model) (a : Action) : Model :=
 def init  : Model :=
   let randomSeeds := #[50, 50, 50, 50, 50, 50, 50, 50, 50, 50]
   let baseHue := 180
-  let mood := .Vibrant
-  let harmony := .Complementary
+  let mood := Mood.Vibrant
+  let harmony := Harmony.Complementary
   let colors := generatePaletteColors baseHue mood harmony randomSeeds
   { baseHue := baseHue, mood := mood, harmony := harmony, colors := colors, contrastPair := { fg := 0, bg := 1 }, adjustmentH := 0, adjustmentS := 0, adjustmentL := 0 }
 
