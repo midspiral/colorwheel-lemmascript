@@ -208,7 +208,7 @@ function allHarmonyHues(baseHue: int, harmony: Harmony): seq<int>
 
 function huesMatchHarmony(colors: seq<Color>, baseHue: int, harmony: Harmony): bool
 {
-  (harmony.Custom? || var expectedHues := allHarmonyHues(baseHue, harmony); if ((|colors| != 5) || (|expectedHues| != 5)) then false else (((((colors[0].h == expectedHues[0]) && (colors[1].h == expectedHues[1])) && (colors[2].h == expectedHues[2])) && (colors[3].h == expectedHues[3])) && (colors[4].h == expectedHues[4])))
+  (harmony.Custom? || (var expectedHues := allHarmonyHues(baseHue, harmony); (if ((|colors| != 5) || (|expectedHues| != 5)) then false else (((((colors[0].h == expectedHues[0]) && (colors[1].h == expectedHues[1])) && (colors[2].h == expectedHues[2])) && (colors[3].h == expectedHues[3])) && (colors[4].h == expectedHues[4])))))
 }
 
 function generatePaletteColors(baseHue: int, mood: Mood, harmony: Harmony, randomSeeds: seq<int>): seq<Color>
@@ -243,8 +243,8 @@ function applyIndependentAdjustment(m: Model, index: int, deltaH: int, deltaS: i
   var harmonyBroken := ((!m.harmony.Custom?) && hueChanged);
   var moodBroken := ((!m.mood.Custom?) && !(colorSatisfiesMood(newColor, m.mood)));
   var newColors := m.colors[index := newColor];
-  var newHarmony := if harmonyBroken then Harmony.Custom else m.harmony;
-  var newMood := if moodBroken then Mood.Custom else m.mood;
+  var newHarmony := (if harmonyBroken then Harmony.Custom else m.harmony);
+  var newMood := (if moodBroken then Mood.Custom else m.mood);
   m.(colors := newColors, harmony := newHarmony, mood := newMood)
 }
 
@@ -253,9 +253,9 @@ function applyLinkedAdjustment(m: Model, deltaH: int, deltaS: int, deltaL: int):
 {
   var newBaseHue := normalizeHue((m.baseHue + deltaH));
   var newHues := allHarmonyHues(newBaseHue, m.harmony);
-  var adjustedColors := if (|newHues| == 5) then [adjustColorSL(m.colors[0], newHues[0], deltaS, deltaL), adjustColorSL(m.colors[1], newHues[1], deltaS, deltaL), adjustColorSL(m.colors[2], newHues[2], deltaS, deltaL), adjustColorSL(m.colors[3], newHues[3], deltaS, deltaL), adjustColorSL(m.colors[4], newHues[4], deltaS, deltaL)] else [adjustColorSL(m.colors[0], normalizeHue((m.colors[0].h + deltaH)), deltaS, deltaL), adjustColorSL(m.colors[1], normalizeHue((m.colors[1].h + deltaH)), deltaS, deltaL), adjustColorSL(m.colors[2], normalizeHue((m.colors[2].h + deltaH)), deltaS, deltaL), adjustColorSL(m.colors[3], normalizeHue((m.colors[3].h + deltaH)), deltaS, deltaL), adjustColorSL(m.colors[4], normalizeHue((m.colors[4].h + deltaH)), deltaS, deltaL)];
+  var adjustedColors := (if (|newHues| == 5) then [adjustColorSL(m.colors[0], newHues[0], deltaS, deltaL), adjustColorSL(m.colors[1], newHues[1], deltaS, deltaL), adjustColorSL(m.colors[2], newHues[2], deltaS, deltaL), adjustColorSL(m.colors[3], newHues[3], deltaS, deltaL), adjustColorSL(m.colors[4], newHues[4], deltaS, deltaL)] else [adjustColorSL(m.colors[0], normalizeHue((m.colors[0].h + deltaH)), deltaS, deltaL), adjustColorSL(m.colors[1], normalizeHue((m.colors[1].h + deltaH)), deltaS, deltaL), adjustColorSL(m.colors[2], normalizeHue((m.colors[2].h + deltaH)), deltaS, deltaL), adjustColorSL(m.colors[3], normalizeHue((m.colors[3].h + deltaH)), deltaS, deltaL), adjustColorSL(m.colors[4], normalizeHue((m.colors[4].h + deltaH)), deltaS, deltaL)]);
   var moodBroken := ((!m.mood.Custom?) && !(allColorsSatisfyMood(adjustedColors, m.mood)));
-  var newMood := if moodBroken then Mood.Custom else m.mood;
+  var newMood := (if moodBroken then Mood.Custom else m.mood);
   m.(baseHue := newBaseHue, colors := adjustedColors, mood := newMood)
 }
 
@@ -270,18 +270,18 @@ function applySetColorDirect(m: Model, index: int, color: Color): Model
   var harmonyPreserved := (m.harmony.Custom? || hueMatches);
   var moodPreserved := (m.mood.Custom? || colorSatisfiesMood(clampedColor, m.mood));
   var newColors := m.colors[index := clampedColor];
-  var newHarmony := if harmonyPreserved then m.harmony else Harmony.Custom;
-  var newMood := if moodPreserved then m.mood else Mood.Custom;
+  var newHarmony := (if harmonyPreserved then m.harmony else Harmony.Custom);
+  var newMood := (if moodPreserved then m.mood else Mood.Custom);
   m.(colors := newColors, harmony := newHarmony, mood := newMood)
 }
 
 function normalizeModel(m: Model): Model
 {
   var normalizedBaseHue := normalizeHue(m.baseHue);
-  var normalizedColors := if (|m.colors| == 5) then [clampColor(m.colors[0]), clampColor(m.colors[1]), clampColor(m.colors[2]), clampColor(m.colors[3]), clampColor(m.colors[4])] else [Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0)];
-  var normalizedContrastPair := if ((((0 <= m.contrastPair.fg) && (m.contrastPair.fg < 5)) && (0 <= m.contrastPair.bg)) && (m.contrastPair.bg < 5)) then m.contrastPair else ContrastPair(0, 1);
-  var finalMood := if m.mood.Custom? then Mood.Custom else if allColorsSatisfyMood(normalizedColors, m.mood) then m.mood else Mood.Custom;
-  var finalHarmony := if m.harmony.Custom? then Harmony.Custom else if huesMatchHarmony(normalizedColors, normalizedBaseHue, m.harmony) then m.harmony else Harmony.Custom;
+  var normalizedColors := (if (|m.colors| == 5) then [clampColor(m.colors[0]), clampColor(m.colors[1]), clampColor(m.colors[2]), clampColor(m.colors[3]), clampColor(m.colors[4])] else [Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0)]);
+  var normalizedContrastPair := (if ((((0 <= m.contrastPair.fg) && (m.contrastPair.fg < 5)) && (0 <= m.contrastPair.bg)) && (m.contrastPair.bg < 5)) then m.contrastPair else ContrastPair(0, 1));
+  var finalMood := (if m.mood.Custom? then Mood.Custom else (if allColorsSatisfyMood(normalizedColors, m.mood) then m.mood else Mood.Custom));
+  var finalHarmony := (if m.harmony.Custom? then Harmony.Custom else (if huesMatchHarmony(normalizedColors, normalizedBaseHue, m.harmony) then m.harmony else Harmony.Custom));
   m.(baseHue := normalizedBaseHue, colors := normalizedColors, contrastPair := normalizedContrastPair, mood := finalMood, harmony := finalHarmony)
 }
 
