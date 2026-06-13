@@ -79,7 +79,7 @@ def clamp (x : Int) (min : Int) (max : Int) : Int :=
       x
 
 def normalizeHue (h : Int) : Int :=
-  let normalized := h % 360
+  let normalized := Int.tmod h 360
   if normalized < 0 then
     normalized + 360
   else
@@ -130,8 +130,8 @@ def randomInRange (seed : Int) (min : Int) (max : Int) : Int :=
 
 def goldenSLForMood (mood : Mood) (colorIndex : Int) (seedS : Int) (seedL : Int) : SLPair :=
   let bounds := moodBoundsOf mood
-  let spreadS := (seedS + colorIndex * 62) % 101
-  let spreadL := (seedL + colorIndex * 38) % 101
+  let spreadS := Int.tmod (seedS + colorIndex * 62) 101
+  let spreadL := Int.tmod (seedL + colorIndex * 38) 101
   { s := randomInRange spreadS bounds.minS bounds.maxS, l := randomInRange spreadL bounds.minL bounds.maxL }
 
 def generateColorGolden (h : Int) (mood : Mood) (colorIndex : Int) (seedS : Int) (seedL : Int) : Color :=

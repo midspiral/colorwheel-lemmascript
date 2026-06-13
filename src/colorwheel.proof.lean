@@ -3,6 +3,10 @@ import «colorwheel.def»
 set_option loom.semantics.termination "total"
 set_option loom.semantics.choice "demonic"
 
+-- `normalizeHue`/`goldenSLForMood` use `Int.tmod` (JS `%` truncates toward zero),
+-- which `omega`/`grind` don't reason about natively. These bounds let them close.
+attribute [local grind] Int.tmod_lt_of_pos Int.lt_tmod_of_pos
+
 -- ═══ Pure helpers ═══
 prove_correct clamp by unfold Pure.clamp; loom_solve
 prove_correct normalizeHue by unfold Pure.normalizeHue; loom_solve
@@ -45,9 +49,11 @@ theorem initSatisfiesInv : ModelInv (Pure.init) := by decide
 -- Helper lemmas for normalizeModel proof
 
 private theorem normalizeHue_nonneg (h : Int) : 0 ≤ Pure.normalizeHue h := by
+  have := Int.lt_tmod_of_pos h (show (0:Int) < 360 by omega)
   simp only [Pure.normalizeHue]; split <;> omega
 
 private theorem normalizeHue_lt (h : Int) : Pure.normalizeHue h < 360 := by
+  have := Int.tmod_lt_of_pos h (show (0:Int) < 360 by omega)
   simp only [Pure.normalizeHue]; split <;> omega
 
 private theorem clamp_bounds (x lo hi : Int) (h : lo ≤ hi) :

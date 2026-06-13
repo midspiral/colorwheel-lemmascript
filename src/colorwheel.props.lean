@@ -8,7 +8,7 @@ import «colorwheel.proof»
 
 private theorem normalizeHue_idempotent (h : Int) (h0 : 0 ≤ h) (h1 : h < 360) :
     Pure.normalizeHue h = h := by
-  simp only [Pure.normalizeHue]; omega
+  simp only [Pure.normalizeHue, Int.tmod_eq_of_lt h0 h1]; omega
 
 private theorem clamp_idempotent (x lo hi : Int) (hlo : lo ≤ x) (hhi : x ≤ hi) :
     Pure.clamp x lo hi = x := by
@@ -23,12 +23,18 @@ private theorem clampColor_idempotent (c : Color) (hv : ValidColor c) :
 
 @[simp] private theorem normalizeHue_idem (h : Int) :
     Pure.normalizeHue (Pure.normalizeHue h) = Pure.normalizeHue h :=
-  normalizeHue_idempotent _ (by simp only [Pure.normalizeHue]; split <;> omega)
-    (by simp only [Pure.normalizeHue]; split <;> omega)
+  normalizeHue_idempotent _
+    (by have := Int.lt_tmod_of_pos h (show (0:Int) < 360 by omega)
+        simp only [Pure.normalizeHue]; split <;> omega)
+    (by have := Int.tmod_lt_of_pos h (show (0:Int) < 360 by omega)
+        simp only [Pure.normalizeHue]; split <;> omega)
 
 @[simp] private theorem clampColor_idem (c : Color) :
     Pure.clampColor (Pure.clampColor c) = Pure.clampColor c :=
-  clampColor_idempotent _ (by constructor <;> simp only [Pure.clampColor, Pure.normalizeHue, Pure.clamp] <;> split <;> omega)
+  clampColor_idempotent _ (by
+    have := Int.lt_tmod_of_pos c.h (show (0:Int) < 360 by omega)
+    have := Int.tmod_lt_of_pos c.h (show (0:Int) < 360 by omega)
+    constructor <;> simp only [Pure.clampColor, Pure.normalizeHue, Pure.clamp] <;> split <;> omega)
 
 @[simp] private theorem getElem!_of_lt {α : Type} [Inhabited α] (a : Array α) (i : Nat) (h : i < a.size) :
     a[i]! = a[i] := by
@@ -234,13 +240,13 @@ private lemma colorSatisfiesMood_of_generated_core (mood : Mood) (h i seedS seed
   simp only [Pure.generateColorGolden, Pure.goldenSLForMood, Pure.moodBoundsOf,
              Pure.colorSatisfiesMood, Pure.clampColor, Pure.clamp, Pure.normalizeHue,
              decide_eq_true_eq]
-  -- spreadS/spreadL are in [0, 100] from % 101
-  set sS := (seedS + i * 62) % 101
-  set sL := (seedL + i * 38) % 101
-  have hsS0 : 0 ≤ sS := Int.emod_nonneg _ (by omega)
-  have hsS1 : sS ≤ 100 := by have := Int.emod_lt_of_pos (seedS + i * 62) (by omega : (101 : Int) > 0); omega
-  have hsL0 : 0 ≤ sL := Int.emod_nonneg _ (by omega)
-  have hsL1 : sL ≤ 100 := by have := Int.emod_lt_of_pos (seedL + i * 38) (by omega : (101 : Int) > 0); omega
+  -- spreadS/spreadL are in [0, 100] from `Int.tmod _ 101` (dividend is nonneg here)
+  set sS := Int.tmod (seedS + i * 62) 101
+  set sL := Int.tmod (seedL + i * 38) 101
+  have hsS0 : 0 ≤ sS := Int.tmod_nonneg 101 (by omega)
+  have hsS1 : sS ≤ 100 := by have := Int.tmod_lt_of_pos (seedS + i * 62) (by omega : (0 : Int) < 101); omega
+  have hsL0 : 0 ≤ sL := Int.tmod_nonneg 101 (by omega)
+  have hsL1 : sL ≤ 100 := by have := Int.tmod_lt_of_pos (seedL + i * 38) (by omega : (0 : Int) < 101); omega
   -- Per mood: each first branch provides bounds + closes with omega
   have rge := @Pure.randomInRange_ge; have rle := @Pure.randomInRange_le
   cases mood <;> simp only [decide_eq_true_eq] <;> first
