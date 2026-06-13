@@ -11,6 +11,13 @@ function JSFloorDiv(a: int, b: int): int
     else -((a - 1) / (-b)) - 1
 }
 
+function JSRem(a: int, b: int): int
+  requires b != 0
+{
+  var r := (if a < 0 then -a else a) % (if b < 0 then -b else b);
+  if a < 0 then -r else r
+}
+
 datatype Color = Color(h: int, s: int, l: int)
 
 datatype Mood = Vibrant | SoftMuted | Pastel | DeepJewel | Earth | Neon | Custom
@@ -48,7 +55,7 @@ lemma clamp_ensures(x: int, min: int, max: int)
 
 function normalizeHue(h: int): int
 {
-  var normalized := (h % 360);
+  var normalized := JSRem(h, 360);
   if (normalized < 0) then
     (normalized + 360)
   else
@@ -145,8 +152,8 @@ function goldenSLForMood(mood: Mood, colorIndex: int, seedS: int, seedL: int): S
   requires (seedL <= 100)
 {
   var bounds := moodBoundsOf(mood);
-  var spreadS := ((seedS + (colorIndex * 62)) % 101);
-  var spreadL := ((seedL + (colorIndex * 38)) % 101);
+  var spreadS := JSRem((seedS + (colorIndex * 62)), 101);
+  var spreadL := JSRem((seedL + (colorIndex * 38)), 101);
   SLPair(randomInRange(spreadS, bounds.minS, bounds.maxS), randomInRange(spreadL, bounds.minL, bounds.maxL))
 }
 
