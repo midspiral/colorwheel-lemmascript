@@ -1,6 +1,6 @@
 # ColorWheel — Verified Color Palette Generator
 
-[![LemmaScript: verified](https://img.shields.io/badge/LemmaScript-verified-brightgreen)](https://github.com/midspiral/colorwheel-lemmascript/actions/workflows/ci.yml)
+[![LemmaScript verified](https://img.shields.io/github/actions/workflow/status/midspiral/colorwheel-lemmascript/ci.yml?branch=main&label=LemmaScript%20verified)](https://github.com/midspiral/colorwheel-lemmascript/actions/workflows/ci.yml)
 
 
 A color palette generator with formally verified state transitions, built with [LemmaScript](https://github.com/midspiral/LemmaScript) and React.
