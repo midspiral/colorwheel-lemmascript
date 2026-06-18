@@ -2,7 +2,6 @@
 
 [![LemmaScript verified](https://img.shields.io/github/actions/workflow/status/midspiral/colorwheel-lemmascript/ci.yml?branch=main&label=LemmaScript%20verified)](https://github.com/midspiral/colorwheel-lemmascript/actions/workflows/ci.yml)
 
-
 A color palette generator with formally verified state transitions, built with [LemmaScript](https://github.com/midspiral/LemmaScript) and React.
 
 This is a reimplementation of the [Dafny ColorWheel](https://github.com/metareflection/dafny-replay/tree/main/colorwheel) using LemmaScript — the TypeScript is both the implementation and the verified source. No compilation bridge, no BigNumber.js.
