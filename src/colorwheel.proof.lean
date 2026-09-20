@@ -1,46 +1,77 @@
 import «colorwheel.def»
 
-set_option loom.semantics.termination "total"
-set_option loom.semantics.choice "demonic"
+set_option velvet.semantics.termination "total"
 
 -- `normalizeHue`/`goldenSLForMood` use `Int.tmod` (JS `%` truncates toward zero),
 -- which `omega`/`grind` don't reason about natively. These bounds let them close.
 attribute [local grind] Int.tmod_lt_of_pos Int.lt_tmod_of_pos
 
 -- ═══ Pure helpers ═══
-prove_correct clamp by unfold Pure.clamp; loom_solve
-prove_correct normalizeHue by unfold Pure.normalizeHue; loom_solve
-prove_correct clampColor by unfold Pure.clampColor Pure.normalizeHue Pure.clamp; loom_solve
-prove_correct moodBoundsOf by unfold Pure.moodBoundsOf; loom_solve
-prove_correct colorSatisfiesMood by unfold Pure.colorSatisfiesMood; loom_solve
-prove_correct adjustColorSL by unfold Pure.adjustColorSL; loom_solve
-prove_correct validBaseHue by unfold Pure.validBaseHue; loom_solve
-prove_correct applySelectContrastPair by unfold Pure.applySelectContrastPair; loom_solve
-prove_correct randomInRange by loom_solve
-prove_correct validRandomSeeds by unfold Pure.validRandomSeeds; loom_solve
-prove_correct allColorsSatisfyMood by unfold Pure.allColorsSatisfyMood; loom_solve
-prove_correct baseHarmonyHues by unfold Pure.baseHarmonyHues; loom_solve
-prove_correct allHarmonyHues by unfold Pure.allHarmonyHues; loom_solve
-prove_correct huesMatchHarmony by unfold Pure.huesMatchHarmony; loom_solve
+prove_correct clamp by
+  velvet_vcgen [clamp] with finish [Pure.clamp]
+prove_correct normalizeHue by
+  velvet_vcgen [normalizeHue] with finish [Pure.normalizeHue]
+prove_correct clampColor by
+  velvet_vcgen [clampColor] with finish [Pure.clampColor, Pure.normalizeHue, Pure.clamp]
+prove_correct moodBoundsOf by
+  velvet_vcgen [moodBoundsOf] with finish [Pure.moodBoundsOf]
+prove_correct colorSatisfiesMood by
+  velvet_vcgen [colorSatisfiesMood] with finish [Pure.colorSatisfiesMood]
+prove_correct adjustColorSL by
+  velvet_vcgen [adjustColorSL] with finish [Pure.adjustColorSL]
+prove_correct validBaseHue by
+  velvet_vcgen [validBaseHue] with finish [Pure.validBaseHue]
+prove_correct applySelectContrastPair by
+  velvet_vcgen [applySelectContrastPair] with finish [Pure.applySelectContrastPair]
+prove_correct randomInRange by
+  velvet_vcgen [randomInRange]
+  all_goals first
+    | (apply Pure.randomInRange_ge <;> assumption)
+    | (apply Pure.randomInRange_le <;> assumption)
+prove_correct validRandomSeeds by
+  velvet_vcgen [validRandomSeeds] with finish [Pure.validRandomSeeds]
+prove_correct allColorsSatisfyMood by
+  velvet_vcgen [allColorsSatisfyMood] with finish [Pure.allColorsSatisfyMood]
+prove_correct baseHarmonyHues by
+  velvet_vcgen [baseHarmonyHues] with finish [Pure.baseHarmonyHues]
+prove_correct allHarmonyHues by
+  velvet_vcgen [allHarmonyHues] with finish [Pure.allHarmonyHues]
+prove_correct huesMatchHarmony by
+  velvet_vcgen [huesMatchHarmony] with finish [Pure.huesMatchHarmony]
 
 -- ═══ Generation ═══
-prove_correct goldenSLForMood by loom_solve
-prove_correct generateColorGolden by loom_solve
-prove_correct generatePaletteColors by loom_solve
-prove_correct init by loom_solve
+prove_correct goldenSLForMood by
+  velvet_vcgen [goldenSLForMood] with try finish
+prove_correct generateColorGolden by
+  velvet_vcgen [generateColorGolden] with try finish
+prove_correct generatePaletteColors by
+  velvet_vcgen [generatePaletteColors] with try finish
+prove_correct init by
+  velvet_vcgen [init] with try finish
 
 -- ═══ Transitions (now pure with ternaries) ═══
-prove_correct applyGeneratePalette by loom_solve
-prove_correct applyRegenerateMood by loom_solve
-prove_correct applyRegenerateHarmony by loom_solve
-prove_correct applyRandomizeBaseHue by loom_solve
-prove_correct applyIndependentAdjustment by loom_solve
-prove_correct applySetColorDirect by loom_solve
-prove_correct applyLinkedAdjustment by loom_solve
-prove_correct applyAdjustPalette by loom_solve
-prove_correct normalizeModel by loom_solve
-prove_correct apply by loom_solve
-prove_correct step by loom_solve
+prove_correct applyGeneratePalette by
+  velvet_vcgen [applyGeneratePalette] with try finish
+prove_correct applyRegenerateMood by
+  velvet_vcgen [applyRegenerateMood] with try finish
+prove_correct applyRegenerateHarmony by
+  velvet_vcgen [applyRegenerateHarmony] with try finish
+prove_correct applyRandomizeBaseHue by
+  velvet_vcgen [applyRandomizeBaseHue] with try finish
+prove_correct applyIndependentAdjustment by
+  velvet_vcgen [applyIndependentAdjustment] with try finish
+prove_correct applySetColorDirect by
+  velvet_vcgen [applySetColorDirect] with try finish
+prove_correct applyLinkedAdjustment by
+  velvet_vcgen [applyLinkedAdjustment] with try finish
+prove_correct applyAdjustPalette by
+  velvet_vcgen [applyAdjustPalette] with try finish
+prove_correct normalizeModel by
+  velvet_vcgen [normalizeModel] with try finish
+prove_correct apply by
+  velvet_vcgen [apply] with try finish
+prove_correct step by
+  velvet_vcgen [step] with try finish
 
 -- ═══ Invariant theorems ═══
 

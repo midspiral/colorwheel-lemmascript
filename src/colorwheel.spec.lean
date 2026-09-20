@@ -24,7 +24,7 @@ instance : Decidable (ModelInv m) := by unfold ModelInv; infer_instance
 -- ═══ Spec lemmas ═══
 
 -- randomInRange bounds: the core arithmetic lemma everything depends on.
-@[grind, loomAbstractionSimp]
+@[grind]
 theorem Pure.randomInRange_ge (seed min max : Int) (hs0 : 0 ≤ seed) (hs1 : seed ≤ 100)
     (hm : min ≤ max) : min ≤ Pure.randomInRange seed min max := by
   unfold Pure.randomInRange
@@ -34,7 +34,7 @@ theorem Pure.randomInRange_ge (seed min max : Int) (hs0 : 0 ≤ seed) (hs1 : see
       Int.ediv_nonneg (mul_nonneg hs0 (by omega)) (by omega)
     omega
 
-@[grind, loomAbstractionSimp]
+@[grind]
 theorem Pure.randomInRange_le (seed min max : Int) (hs0 : 0 ≤ seed) (hs1 : seed ≤ 100)
     (hm : min ≤ max) : Pure.randomInRange seed min max ≤ max := by
   unfold Pure.randomInRange
