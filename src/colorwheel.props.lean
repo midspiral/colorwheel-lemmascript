@@ -183,19 +183,12 @@ theorem generatePaletteIdempotent (m : Model) (baseHue : Int) (mood : Mood)
     (_hvr : Pure.validRandomSeeds seeds = true) :
     let m' := Pure.step m (.GeneratePalette baseHue mood harmony seeds)
     Pure.step m' (.GeneratePalette baseHue mood harmony seeds) = m' := by
-  simp only
-  -- Both steps apply GP with same params: the only difference is contrastPair
-  -- (from m vs from normalizeModel result). normalizeModel's non-cp output is cp-independent (rfl).
-  simp only [Pure.step, Pure.apply, Pure.applyGeneratePalette, Pure.validBaseHue]
-  split_ifs with hv
-  · -- params invalid: contradicts preconditions
-    exfalso; simp_all [Pure.validBaseHue]
-  · -- params valid: two normalizeModel calls on inputs differing only in contrastPair
-    -- Show the contrastPair from normalizeModel equals m.contrastPair (ModelInv → valid cp)
-    unfold ModelInv at h; obtain ⟨_, _, _, _, hcf0, hcf1, hcb0, hcb1, _, _⟩ := h
-    rw [normalizeModel_preserves_contrastPair
-      (⟨baseHue, mood, harmony, Pure.generatePaletteColors baseHue mood harmony seeds,
-        m.contrastPair, 0, 0, 0⟩ : Model) hcf0 hcf1 hcb0 hcb1]
+  simp [Pure.step, Pure.apply, Pure.applyGeneratePalette, _hvb, _hvs, _hvr]
+  unfold ModelInv at h
+  obtain ⟨_, _, _, _, hcf0, hcf1, hcb0, hcb1, _, _⟩ := h
+  rw [normalizeModel_preserves_contrastPair
+    (⟨baseHue, mood, harmony, Pure.generatePaletteColors baseHue mood harmony seeds,
+      m.contrastPair, 0, 0, 0⟩ : Model) hcf0 hcf1 hcb0 hcb1]
 
 -- ═══ Monotonicity of Degradation ═══
 
@@ -249,26 +242,32 @@ private lemma colorSatisfiesMood_of_generated_core (mood : Mood) (h i seedS seed
   have hsL1 : sL ≤ 100 := by have := Int.tmod_lt_of_pos (seedL + i * 38) (by omega : (0 : Int) < 101); omega
   -- Per mood: each first branch provides bounds + closes with omega
   have rge := @Pure.randomInRange_ge; have rle := @Pure.randomInRange_le
-  cases mood <;> simp only [decide_eq_true_eq] <;> first
+  cases mood <;> dsimp [sS, sL] at * <;> first
     | trivial
     | (have := rge sS 70 100 hsS0 hsS1 (by omega); have := rle sS 70 100 hsS0 hsS1 (by omega)
        have := rge sL 40 60 hsL0 hsL1 (by omega); have := rle sL 40 60 hsL0 hsL1 (by omega)
-       split_ifs <;> omega)
+       dsimp [sS, sL] at *
+       grind)
     | (have := rge sS 20 45 hsS0 hsS1 (by omega); have := rle sS 20 45 hsS0 hsS1 (by omega)
        have := rge sL 55 75 hsL0 hsL1 (by omega); have := rle sL 55 75 hsL0 hsL1 (by omega)
-       split_ifs <;> omega)
+       dsimp [sS, sL] at *
+       grind)
     | (have := rge sS 0 35 hsS0 hsS1 (by omega); have := rle sS 0 35 hsS0 hsS1 (by omega)
        have := rge sL 75 100 hsL0 hsL1 (by omega); have := rle sL 75 100 hsL0 hsL1 (by omega)
-       split_ifs <;> omega)
+       dsimp [sS, sL] at *
+       grind)
     | (have := rge sS 60 100 hsS0 hsS1 (by omega); have := rle sS 60 100 hsS0 hsS1 (by omega)
        have := rge sL 25 45 hsL0 hsL1 (by omega); have := rle sL 25 45 hsL0 hsL1 (by omega)
-       split_ifs <;> omega)
+       dsimp [sS, sL] at *
+       grind)
     | (have := rge sS 15 40 hsS0 hsS1 (by omega); have := rle sS 15 40 hsS0 hsS1 (by omega)
        have := rge sL 30 60 hsL0 hsL1 (by omega); have := rle sL 30 60 hsL0 hsL1 (by omega)
-       split_ifs <;> omega)
+       dsimp [sS, sL] at *
+       grind)
     | (have := rge sS 90 100 hsS0 hsS1 (by omega); have := rle sS 90 100 hsS0 hsS1 (by omega)
        have := rge sL 50 65 hsL0 hsL1 (by omega); have := rle sL 50 65 hsL0 hsL1 (by omega)
-       split_ifs <;> omega)
+       dsimp [sS, sL] at *
+       grind)
 
 -- Simp-friendly wrapper with individual bound args for automatic side condition discharge
 @[simp] private lemma colorSatisfiesMood_of_generated (mood : Mood) (h i seedS seedL : Int)
@@ -291,7 +290,6 @@ theorem canReachAnyColor (m : Model) (idx : Int) (target : Color) (h : ModelInv 
   interval_cases n <;> simp_all [← hn, clampColor_idempotent _ hv, clampColor_idem]
 
 set_option maxHeartbeats 1600000 in
-set_option auto.smt.timeout 30 in
 theorem canRecoverMood (m : Model) (targetMood : Mood) (seeds : Array Int) (h : ModelInv m)
     (hvs : seeds.size = 10) (hvr : Pure.validRandomSeeds seeds = true) :
     (Pure.step m (.RegenerateMood targetMood seeds)).mood = targetMood := by

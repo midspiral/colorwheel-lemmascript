@@ -4,187 +4,186 @@
 -/
 import «colorwheel.spec»
 
-set_option loom.semantics.termination "total"
-set_option loom.semantics.choice "demonic"
+set_option velvet.semantics.termination "total"
 
-method clamp (x : Int) (min : Int) (max : Int) return (res : Int)
-  require min ≤ max
-  ensures res ≥ min
-  ensures res ≤ max
+method clamp (x : Int) (min : Int) (max : Int) returns (res : Int)
+  requires require_1: (min ≤ max : Prop)
+  ensures ensures_1: (res ≥ min : Prop)
+  ensures ensures_2: (res ≤ max : Prop)
   do
     return Pure.clamp x min max
 
-method normalizeHue (h : Int) return (res : Int)
-  ensures res ≥ 0
-  ensures res < 360
+method normalizeHue (h : Int) returns (res : Int)
+  ensures ensures_1: (res ≥ 0 : Prop)
+  ensures ensures_2: (res < 360 : Prop)
   do
     return Pure.normalizeHue h
 
-method clampColor (c : Color) return (res : Color)
-  ensures res.h ≥ 0
-  ensures res.h < 360
-  ensures res.s ≥ 0
-  ensures res.s ≤ 100
-  ensures res.l ≥ 0
-  ensures res.l ≤ 100
+method clampColor (c : Color) returns (res : Color)
+  ensures ensures_1: (res.h ≥ 0 : Prop)
+  ensures ensures_2: (res.h < 360 : Prop)
+  ensures ensures_3: (res.s ≥ 0 : Prop)
+  ensures ensures_4: (res.s ≤ 100 : Prop)
+  ensures ensures_5: (res.l ≥ 0 : Prop)
+  ensures ensures_6: (res.l ≤ 100 : Prop)
   do
     return Pure.clampColor c
 
-method moodBoundsOf (mood : Mood) return (res : MoodBoundsResult)
+method moodBoundsOf (mood : Mood) returns (res : MoodBoundsResult)
   do
     return Pure.moodBoundsOf mood
 
-method colorSatisfiesMood (c : Color) (mood : Mood) return (res : Bool)
+method colorSatisfiesMood (c : Color) (mood : Mood) returns (res : Bool)
   do
     return Pure.colorSatisfiesMood c mood
 
-method randomInRange (seed : Int) (min : Int) (max : Int) return (res : Int)
-  require seed ≥ 0
-  require seed ≤ 100
-  require min ≤ max
-  ensures res ≥ min
-  ensures res ≤ max
+method randomInRange (seed : Int) (min : Int) (max : Int) returns (res : Int)
+  requires require_1: (seed ≥ 0 : Prop)
+  requires require_2: (seed ≤ 100 : Prop)
+  requires require_3: (min ≤ max : Prop)
+  ensures ensures_1: (res ≥ min : Prop)
+  ensures ensures_2: (res ≤ max : Prop)
   do
     return Pure.randomInRange seed min max
 
-method goldenSLForMood (mood : Mood) (colorIndex : Int) (seedS : Int) (seedL : Int) return (res : SLPair)
-  require colorIndex ≥ 0
-  require colorIndex < 5
-  require seedS ≥ 0
-  require seedS ≤ 100
-  require seedL ≥ 0
-  require seedL ≤ 100
+method goldenSLForMood (mood : Mood) (colorIndex : Int) (seedS : Int) (seedL : Int) returns (res : SLPair)
+  requires require_1: (colorIndex ≥ 0 : Prop)
+  requires require_2: (colorIndex < 5 : Prop)
+  requires require_3: (seedS ≥ 0 : Prop)
+  requires require_4: (seedS ≤ 100 : Prop)
+  requires require_5: (seedL ≥ 0 : Prop)
+  requires require_6: (seedL ≤ 100 : Prop)
   do
     return Pure.goldenSLForMood mood colorIndex seedS seedL
 
-method generateColorGolden (h : Int) (mood : Mood) (colorIndex : Int) (seedS : Int) (seedL : Int) return (res : Color)
-  require h ≥ 0
-  require h < 360
-  require colorIndex ≥ 0
-  require colorIndex < 5
-  require seedS ≥ 0
-  require seedS ≤ 100
-  require seedL ≥ 0
-  require seedL ≤ 100
+method generateColorGolden (h : Int) (mood : Mood) (colorIndex : Int) (seedS : Int) (seedL : Int) returns (res : Color)
+  requires require_1: (h ≥ 0 : Prop)
+  requires require_2: (h < 360 : Prop)
+  requires require_3: (colorIndex ≥ 0 : Prop)
+  requires require_4: (colorIndex < 5 : Prop)
+  requires require_5: (seedS ≥ 0 : Prop)
+  requires require_6: (seedS ≤ 100 : Prop)
+  requires require_7: (seedL ≥ 0 : Prop)
+  requires require_8: (seedL ≤ 100 : Prop)
   do
     return Pure.generateColorGolden h mood colorIndex seedS seedL
 
-method allColorsSatisfyMood (colors : Array Color) (mood : Mood) return (res : Bool)
-  require colors.size = 5
+method allColorsSatisfyMood (colors : Array Color) (mood : Mood) returns (res : Bool)
+  requires require_1: (colors.size = 5 : Prop)
   do
     return Pure.allColorsSatisfyMood colors mood
 
-method baseHarmonyHues (baseHue : Int) (harmony : Harmony) return (res : Array Int)
+method baseHarmonyHues (baseHue : Int) (harmony : Harmony) returns (res : Array Int)
   do
     return Pure.baseHarmonyHues baseHue harmony
 
-method allHarmonyHues (baseHue : Int) (harmony : Harmony) return (res : Array Int)
+method allHarmonyHues (baseHue : Int) (harmony : Harmony) returns (res : Array Int)
   do
     return Pure.allHarmonyHues baseHue harmony
 
-method huesMatchHarmony (colors : Array Color) (baseHue : Int) (harmony : Harmony) return (res : Bool)
+method huesMatchHarmony (colors : Array Color) (baseHue : Int) (harmony : Harmony) returns (res : Bool)
   do
     return Pure.huesMatchHarmony colors baseHue harmony
 
-method generatePaletteColors (baseHue : Int) (mood : Mood) (harmony : Harmony) (randomSeeds : Array Int) return (res : Array Color)
-  require baseHue ≥ 0
-  require baseHue < 360
-  require randomSeeds.size = 10
-  require ∀ k : Nat, k < 10 → randomSeeds[k]! ≥ 0 ∧ randomSeeds[k]! ≤ 100
+method generatePaletteColors (baseHue : Int) (mood : Mood) (harmony : Harmony) (randomSeeds : Array Int) returns (res : Array Color)
+  requires require_1: (baseHue ≥ 0 : Prop)
+  requires require_2: (baseHue < 360 : Prop)
+  requires require_3: (randomSeeds.size = 10 : Prop)
+  requires require_4: (∀ k : Nat, k < 10 → randomSeeds[k]! ≥ 0 ∧ randomSeeds[k]! ≤ 100 : Prop)
   do
     return Pure.generatePaletteColors baseHue mood harmony randomSeeds
 
-method adjustColorSL (c : Color) (newHue : Int) (deltaS : Int) (deltaL : Int) return (res : Color)
-  require newHue ≥ 0
-  require newHue < 360
+method adjustColorSL (c : Color) (newHue : Int) (deltaS : Int) (deltaL : Int) returns (res : Color)
+  requires require_1: (newHue ≥ 0 : Prop)
+  requires require_2: (newHue < 360 : Prop)
   do
     return Pure.adjustColorSL c newHue deltaS deltaL
 
-method applyIndependentAdjustment (m : Model) (index : Int) (deltaH : Int) (deltaS : Int) (deltaL : Int) return (res : Model)
-  require index ≥ 0
-  require index < 5
-  require (m.colors).size = 5
+method applyIndependentAdjustment (m : Model) (index : Int) (deltaH : Int) (deltaS : Int) (deltaL : Int) returns (res : Model)
+  requires require_1: (index ≥ 0 : Prop)
+  requires require_2: (index < 5 : Prop)
+  requires require_3: ((m.colors).size = 5 : Prop)
   do
     return Pure.applyIndependentAdjustment m index deltaH deltaS deltaL
 
-method applyLinkedAdjustment (m : Model) (deltaH : Int) (deltaS : Int) (deltaL : Int) return (res : Model)
-  require (m.colors).size = 5
+method applyLinkedAdjustment (m : Model) (deltaH : Int) (deltaS : Int) (deltaL : Int) returns (res : Model)
+  requires require_1: ((m.colors).size = 5 : Prop)
   do
     return Pure.applyLinkedAdjustment m deltaH deltaS deltaL
 
-method applySetColorDirect (m : Model) (index : Int) (color : Color) return (res : Model)
-  require index ≥ 0
-  require index < 5
-  require (m.colors).size = 5
+method applySetColorDirect (m : Model) (index : Int) (color : Color) returns (res : Model)
+  requires require_1: (index ≥ 0 : Prop)
+  requires require_2: (index < 5 : Prop)
+  requires require_3: ((m.colors).size = 5 : Prop)
   do
     return Pure.applySetColorDirect m index color
 
-method normalizeModel (m : Model) return (res : Model)
+method normalizeModel (m : Model) returns (res : Model)
   do
     return Pure.normalizeModel m
 
-method validBaseHue (h : Int) return (res : Bool)
+method validBaseHue (h : Int) returns (res : Bool)
   do
     return Pure.validBaseHue h
 
-method validRandomSeeds (seeds : Array Int) return (res : Bool)
-  require seeds.size = 10
+method validRandomSeeds (seeds : Array Int) returns (res : Bool)
+  requires require_1: (seeds.size = 10 : Prop)
   do
     return Pure.validRandomSeeds seeds
 
-method applySelectContrastPair (m : Model) (fg : Int) (bg : Int) return (res : Model)
+method applySelectContrastPair (m : Model) (fg : Int) (bg : Int) returns (res : Model)
   do
     return Pure.applySelectContrastPair m fg bg
 
-method applyGeneratePalette (m : Model) (baseHue : Int) (mood : Mood) (harmony : Harmony) (randomSeeds : Array Int) return (res : Model)
-  require (m.colors).size = 5
+method applyGeneratePalette (m : Model) (baseHue : Int) (mood : Mood) (harmony : Harmony) (randomSeeds : Array Int) returns (res : Model)
+  requires require_1: ((m.colors).size = 5 : Prop)
   do
     return Pure.applyGeneratePalette m baseHue mood harmony randomSeeds
 
-method applyAdjustPalette (m : Model) (deltaH : Int) (deltaS : Int) (deltaL : Int) return (res : Model)
-  require (m.colors).size = 5
+method applyAdjustPalette (m : Model) (deltaH : Int) (deltaS : Int) (deltaL : Int) returns (res : Model)
+  requires require_1: ((m.colors).size = 5 : Prop)
   do
     return Pure.applyAdjustPalette m deltaH deltaS deltaL
 
-method applyRegenerateMood (m : Model) (mood : Mood) (randomSeeds : Array Int) return (res : Model)
-  require (m.colors).size = 5
-  require m.baseHue ≥ 0
-  require m.baseHue < 360
+method applyRegenerateMood (m : Model) (mood : Mood) (randomSeeds : Array Int) returns (res : Model)
+  requires require_1: ((m.colors).size = 5 : Prop)
+  requires require_2: (m.baseHue ≥ 0 : Prop)
+  requires require_3: (m.baseHue < 360 : Prop)
   do
     return Pure.applyRegenerateMood m mood randomSeeds
 
-method applyRegenerateHarmony (m : Model) (harmony : Harmony) (randomSeeds : Array Int) return (res : Model)
-  require (m.colors).size = 5
-  require m.baseHue ≥ 0
-  require m.baseHue < 360
+method applyRegenerateHarmony (m : Model) (harmony : Harmony) (randomSeeds : Array Int) returns (res : Model)
+  requires require_1: ((m.colors).size = 5 : Prop)
+  requires require_2: (m.baseHue ≥ 0 : Prop)
+  requires require_3: (m.baseHue < 360 : Prop)
   do
     return Pure.applyRegenerateHarmony m harmony randomSeeds
 
-method applyRandomizeBaseHue (m : Model) (newBaseHue : Int) (randomSeeds : Array Int) return (res : Model)
-  require (m.colors).size = 5
+method applyRandomizeBaseHue (m : Model) (newBaseHue : Int) (randomSeeds : Array Int) returns (res : Model)
+  requires require_1: ((m.colors).size = 5 : Prop)
   do
     return Pure.applyRandomizeBaseHue m newBaseHue randomSeeds
 
-method validAction (a : Action) return (res : Bool)
+method validAction (a : Action) returns (res : Bool)
   do
     return Pure.validAction a
 
-method apply (m : Model) (a : Action) return (res : Model)
-  require (m.colors).size = 5
-  require m.baseHue ≥ 0
-  require m.baseHue < 360
-  require Pure.validAction a
+method apply (m : Model) (a : Action) returns (res : Model)
+  requires require_1: ((m.colors).size = 5 : Prop)
+  requires require_2: (m.baseHue ≥ 0 : Prop)
+  requires require_3: (m.baseHue < 360 : Prop)
+  requires require_4: (Pure.validAction a : Prop)
   do
     return Pure.apply m a
 
-method step (m : Model) (a : Action) return (res : Model)
-  require (m.colors).size = 5
-  require m.baseHue ≥ 0
-  require m.baseHue < 360
-  require Pure.validAction a
+method step (m : Model) (a : Action) returns (res : Model)
+  requires require_1: ((m.colors).size = 5 : Prop)
+  requires require_2: (m.baseHue ≥ 0 : Prop)
+  requires require_3: (m.baseHue < 360 : Prop)
+  requires require_4: (Pure.validAction a : Prop)
   do
     return Pure.step m a
 
-method init  return (res : Model)
+method init  returns (res : Model)
   do
     return Pure.init 
