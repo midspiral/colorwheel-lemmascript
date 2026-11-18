@@ -186,4 +186,4 @@ method step (m : Model) (a : Action) returns (res : Model)
 
 method init  returns (res : Model)
   do
-    return Pure.init 
+    return Pure.init
